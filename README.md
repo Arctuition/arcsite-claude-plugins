@@ -54,6 +54,10 @@ only analyses and previews. The agent never publishes: it ends with a release
 plan and Console links, and you publish in the Console, layer by layer in the
 plan's order.
 
+A Rule at `review_required` does not stop an order: the order completes as
+"Ready with warnings". If someone must sign off before the order can go
+ahead, ask for a required Workflow task instead.
+
 ## Fewer approval prompts (optional)
 
 Claude Code asks before each tool call unless you allow it. To allow the

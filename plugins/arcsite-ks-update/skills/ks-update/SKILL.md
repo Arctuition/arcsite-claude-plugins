@@ -91,6 +91,9 @@ somebody else edited the layer: re-read before writing.
 - Anything asked for that the format cannot express, or a decision the person
   must make, goes in `notes` as `[req N] …`. Never substitute a different valid
   value for one the model cannot hold.
+- When a word in the request could cover more values than the one it names
+  ("no PVC" when other lines are vinyl-coated too), change only the value it
+  names and ask about the rest.
 
 ## 4. Preview until it is right
 
@@ -149,6 +152,16 @@ name them as current state and write: "Cannot verify that Replay read what the
 release plan will publish; do not take this as the result of the release."
 Never count someone else's draft as the effect of your patch. No difference
 does not prove the change is right.
+
+`case_diff` lists only what moved. A case showing no difference on a
+component does not mean the case lacks it — after an undo or a revert, back to
+the baseline is the expected result. Say "no coverage" only for
+`companies_without_cases`. A Slot that went to `pending_facts` names what it
+waits on in `missing_facts`: check whether your patch touched those facts
+before saying the change is or is not yours. A case that failed with
+`answers_out_of_date` lists the `removed_answers`; `case_diff` shows the
+order's `answers`. If your patch narrowed one of those questions, a real order
+chose a value you took away: that is your change's effect — report it and ask.
 
 ## 8. Hand over
 

@@ -1,0 +1,8 @@
+{
+  "name": "arcsite-ks-update",
+  "version": "1.0.0",
+  "description": "Update Knowledge Studio knowledge from Claude Code: find the layer, preview and save a draft, run Replay, and hand publishing back to the Console.",
+  "author": {
+    "name": "ArcSite"
+  }
+}

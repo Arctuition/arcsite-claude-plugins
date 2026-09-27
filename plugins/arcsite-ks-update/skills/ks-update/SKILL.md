@@ -57,7 +57,16 @@ a company happens to be bound:
 Stop and ask when: there is more than one candidate (`selected` is null),
 the reach of the layer does not match the request, or the request needs a
 Trade or Core change, a new Overlay, a binding change, Product Catalog tags or
-attributes, or a change in two layers at once.
+attributes, or one change that would have to be split across two layers (for
+example a Manufacturer change plus an Overlay change to cancel it for one
+company).
+
+A request with several changes, each of which belongs in one layer by the
+rules above, is fine: it asked for several changes, not one change in two
+layers. Choose the layer for each change separately, and treat each layer as
+its own target through sections 2–6 (its own reads, patch, preview and
+apply); never put two layers in one document. If a line does not make clear
+which layer it belongs in, ask about that line.
 
 ## 2. Read before writing
 
@@ -109,9 +118,10 @@ difference they already saw if it changed.
 ## 5. Check yourself before saving (no need to ask the person)
 
 Before any apply, map every row of the preview's changed / added / removed to
-a line of the request. Confirm: one target layer; nothing outside the request;
-every `touched` record accounted for (`touched.missing` is 0). If a row maps to
-nothing, or the scope is in doubt, stop and ask instead of applying.
+a line of the request. Confirm: one target layer per document; nothing outside
+the request; every `touched` record accounted for (`touched.missing` is 0). If
+a row maps to nothing, or the scope is in doubt, stop and ask instead of
+applying.
 
 Also check the request's premise against what you read. If it asks to make
 something stricter that is already stricter (a Rule that is already
@@ -140,6 +150,11 @@ with the same document and the preview's `context_checksum` and
   drift; say the undo needs to be redone by hand.
 
 ## 7. Replay
+
+With several layers changed, run `ks_replay` once, on the highest of them:
+its cases are every company that reads it, and each case reads all the drafts
+below it. Run it on another changed layer too only when that layer is not
+below the first.
 
 After `ks_replay`, poll `ks_replay_results` `action: status` until no case is
 `queued` or `running`, then read `ks_replay_results` `action: case_diff` for
@@ -188,10 +203,17 @@ the person ticks the same companies in the Release plan card, presses Compute
 plan again, reviews each step's whole draft, and publishes every step at once.
 Give that link; don't tell them to publish layer by layer.
 
+With several layers changed, get the release plan of the highest of them, with
+every target company. Each layer you changed must be one of its steps with
+`own_changes`. If one is not (it is not below that layer, or no chosen company
+reads it), get that layer's release plan too and give both links: each
+publishes in one go, but they are two releases.
+
 ## Summary (always this shape)
 
 - **Environment:** ks-test
-- **Layer changed:** name (kind) — draft saved / preview only; **not published**
+- **Layers changed:** one line per layer: name (kind) — draft saved / preview
+  only; **not published**
 - **Why:** each request line → what changed (or "not done" with the reason)
 - **Requirements:** each one marked done / needs confirmation / cannot be expressed now
 - **Affects:** companies bound directly; downstream layers and their companies
@@ -199,7 +221,8 @@ Give that link; don't tell them to publish layer by layer.
 - **Replay:** per company: changed / unchanged / failed / no coverage; input
   identity unknown (aggregate fingerprint for reference); whether this can be
   taken as the release result (no, if other drafts were read)
-- **Undo:** apply_id, and that `ks_applies` returns its undo document
+- **Undo:** each layer's apply_id, and that `ks_applies` returns its undo
+  document
 - **To publish:** the release plan steps, and the Versions link where the
   Release plan card publishes them in one go
 - **Open items:** anything unresolved

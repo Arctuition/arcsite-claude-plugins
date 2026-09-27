@@ -9,29 +9,52 @@ marketplace: installing needs no GitHub account.
 
 ## Install (once)
 
-You need Claude Code (CLI, the desktop app's Code tab, or VS Code).
+You need Claude Code: the Claude desktop app's **Code** tab, a terminal
+(`claude`), or VS Code. Your ArcSite Google Workspace account needs the Admin
+Console's Knowledge Studio authoring role (`SYSTEM_CONTENT`) on admin-test;
+without it the sign-in page tells you so.
 
-1. Add the marketplace and install the plugin:
+### In the Claude desktop app
+
+1. In the **Code** tab, open a local session. Click **+** next to the prompt
+   box, then **Plugins** → **Add plugin**.
+2. Add the marketplace `https://github.com/Arctuition/arcsite-claude-plugins`,
+   then install **arcsite-ks-update** for your user account.
+3. Connect the **ks-test** connector the plugin adds: start its sign-in, sign
+   in with your ArcSite Google account in the browser that opens, and click
+   **Allow**.
+
+### In a terminal
+
+1. Start `claude` and add the marketplace and the plugin:
 
    ```
    /plugin marketplace add Arctuition/arcsite-claude-plugins
    /plugin install arcsite-ks-update@arcsite
    ```
 
-2. Turn on updates: run `/plugin`, open **Marketplaces**, pick `arcsite`, and
-   choose **Enable auto-update**. Claude Code does not update a marketplace
-   like this one on its own until you do.
+2. Connect: run `/mcp`, pick `plugin:arcsite-ks-update:ks-test`, choose
+   **Authenticate**, then sign in and click **Allow** as above.
 
-3. Connect: run `/mcp`, pick `plugin:arcsite-ks-update:ks-test`, choose
-   **Authenticate**. A browser opens ArcSite's sign-in page: sign in with
-   your ArcSite Google Workspace account and click **Allow**. Your account
-   needs the Admin Console's Knowledge Studio authoring role
-   (`SYSTEM_CONTENT`); without it the page tells you so.
+The desktop app, a terminal and VS Code on one computer share plugin
+settings, so the plugin installed in one is there in the others. Signing in
+is not shared: if you use both the desktop app and a terminal, connect
+ks-test from each.
 
-That's it — no token to copy or renew. Claude Code keeps the credential and
-refreshes it; if it ever lapses, `/mcp` → Authenticate again.
+There is no token to copy or renew. Claude Code keeps the credential and
+refreshes it; if it ever lapses, connect ks-test again.
 
-Organisation admins can pre-install for everyone with managed settings:
+### Updates
+
+Claude Code does not update a marketplace like this one on its own until
+auto-update is on for it. Turn it on once from a terminal: run `/plugin`,
+open **Marketplaces**, pick `arcsite`, and choose **Enable auto-update**. The
+setting is shared with the desktop app. To update right away, run
+`claude plugin update arcsite-ks-update@arcsite` and start a new session.
+
+### For organisation admins
+
+Admins can pre-install the plugin for everyone with managed settings:
 
 ```json
 {
@@ -55,8 +78,9 @@ Ask in plain words, naming the company or layer and what to change:
 
 Say "save the draft" when you want the change written; otherwise the agent
 only analyses and previews. The agent never publishes: it ends with a release
-plan and Console links, and you publish in the Console, layer by layer in the
-plan's order.
+plan and Console links, and you publish in the Console from the changed
+layer's Versions module, where the Release plan card publishes every layer in
+the plan in one go.
 
 A Rule at `review_required` does not stop an order: the order completes as
 "Ready with warnings". If someone must sign off before the order can go
@@ -88,7 +112,7 @@ so saving a draft and queueing Replay still ask.
 | You see | Do |
 | --- | --- |
 | The agent says the contract version does not match | Update the plugin: `/plugin` → **Installed** → `arcsite-ks-update` → **Update now**, or `claude plugin update arcsite-ks-update@arcsite` in a shell. Then restart Claude Code |
-| Tools fail with 401 / "not authenticated" | `/mcp` → `ks-test` → Authenticate |
+| Tools fail with 401 / "not authenticated", or ks-test shows as needing sign-in | Connect ks-test again: the ks-test connector in the desktop app, or `/mcp` → `plugin:arcsite-ks-update:ks-test` → **Authenticate** in a terminal |
 | "This account cannot connect" on the sign-in page | Ask an Admin Console administrator for the Knowledge Studio authoring role |
 | `layer_not_editable` | Trade and Core layers are changed by the Knowledge Studio team, not through these tools |
 

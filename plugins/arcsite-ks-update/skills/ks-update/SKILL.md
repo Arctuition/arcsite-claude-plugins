@@ -10,19 +10,21 @@ person asking (usually CS) owns the business decisions and the release; you
 find the layer, read, write the patch, get it through preview, save the draft
 when asked, run Replay, and report.
 
-**Contract version: 1.** Every tool result carries `contract_version`. If it
-is not `1`, stop and tell the person to update the plugin (`/plugin` →
-**Installed** → `arcsite-ks-update` → **Update now**, then restart Claude
-Code) — this skill was written for version 1.
+**Contract version: 2.** Every tool result carries `contract_version`. If it
+is higher than `2`, stop and tell the person to update the plugin (in a
+terminal, `claude plugin update arcsite-ks-update@arcsite`, then start a new
+session). If it is lower, the server has not been updated yet: stop and say
+so. This skill was written for version 2.
 
 Tools (full names in Claude Code: `mcp__plugin_arcsite-ks-update_ks-test__<tool>`):
 `ks_find_target`, `ks_read_layer`, `ks_read_object`, `ks_preview`, `ks_apply`,
-`ks_replay`, `ks_applies`.
+`ks_replay`, `ks_replay_results`, `ks_applies`.
 
 ## 0. Decide what kind of request this is
 
 - **Analyse only** ("check", "explain", "what would it take"): read and
-  preview as needed; never call `ks_apply` or `ks_replay` with `action: run`.
+  preview as needed; never call `ks_apply` or `ks_replay`. Reading earlier
+  Replay results with `ks_replay_results` is fine.
 - **Change and save a draft**: the person explicitly asked to change and
   save (for example "update … and save the draft"). Only then may you apply,
   and then you do not ask again at each step (section 6).
@@ -124,8 +126,7 @@ lower severity).
 Apply when all hold: the person asked to change and save; the preview is
 `applicable`; every change maps to the request (section 5). Call `ks_apply`
 with the same document and the preview's `context_checksum` and
-`diff_checksum`, then `ks_replay` `action: run`. Publishing stays in the
-Console.
+`diff_checksum`, then `ks_replay`. Publishing stays in the Console.
 
 - **Lost response**: never re-send blindly. Call `ks_applies`; if your
   `diff_checksum` is there, it landed. If not, preview again and re-send only
@@ -140,8 +141,9 @@ Console.
 
 ## 7. Replay
 
-After `run`, poll `ks_replay` `action: status` until no case is `queued` or
-`running`, then read `case_diff` for one changed case per company; read more
+After `ks_replay`, poll `ks_replay_results` `action: status` until no case is
+`queued` or `running`, then read `ks_replay_results` `action: case_diff` for
+one changed case per company; read more
 only when the first does not explain the change. Report by company; say
 "no coverage" for `companies_without_cases`; show failures, pending baselines
 and skipped cases as they are — never "all passed".
@@ -164,6 +166,13 @@ before saying the change is or is not yours. A case that failed with
 order's `answers`. If your patch narrowed one of those questions, a real order
 chose a value you took away: that is your change's effect — report it and ask.
 
+Replay compares components and SKUs only. A change that moves neither — a
+Rule's severity or message, a Workflow task — leaves every case unchanged, so
+Replay cannot confirm it. Mark that request line **not verified by Replay**,
+and say what would confirm it: resolve a job in the prototype where the Rule's
+condition holds (or the task applies), and check the readiness and the
+warnings or tasks the job shows.
+
 ## 8. Hand over
 
 Get `ks_read_layer` `part: release_plan` with the target companies'
@@ -173,8 +182,11 @@ pins, each layer's whole unpublished content — other people's edits ship too),
 the companies that move although not targeted (`affected_non_targets`), and the
 layers that stay on their current pins. If the person does not accept a
 non-targeted company moving, stop and hand it back to them — you cannot keep
-that company on the old version. Publishing is done in the Console, layer by
-layer in the plan's order.
+that company on the old version. Publishing is done in the Console, in one
+go: on the release plan's `console_url` (the changed layer's Versions module),
+the person ticks the same companies in the Release plan card, presses Compute
+plan again, reviews each step's whole draft, and publishes every step at once.
+Give that link; don't tell them to publish layer by layer.
 
 ## Summary (always this shape)
 
@@ -188,7 +200,8 @@ layer in the plan's order.
   identity unknown (aggregate fingerprint for reference); whether this can be
   taken as the release result (no, if other drafts were read)
 - **Undo:** apply_id, and that `ks_applies` returns its undo document
-- **To publish:** the release plan steps and Console links
+- **To publish:** the release plan steps, and the Versions link where the
+  Release plan card publishes them in one go
 - **Open items:** anything unresolved
 
 Format valid, Replay finished, and business-correct are three different

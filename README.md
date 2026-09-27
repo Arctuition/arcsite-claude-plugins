@@ -1,7 +1,7 @@
 # arcsite-claude-plugins
 
-Claude Code plugins for ArcSite staff, distributed as a private plugin
-marketplace.
+Claude Code plugins for ArcSite staff. This public repository is the plugin
+marketplace: installing needs no GitHub account.
 
 | Plugin | What it does |
 | --- | --- |
@@ -9,8 +9,7 @@ marketplace.
 
 ## Install (once)
 
-You need Claude Code (CLI, the desktop app's Code tab, or VS Code) and read
-access to this repository (SSH key or `gh auth login`).
+You need Claude Code (CLI, the desktop app's Code tab, or VS Code).
 
 1. Add the marketplace and install the plugin:
 
@@ -19,7 +18,11 @@ access to this repository (SSH key or `gh auth login`).
    /plugin install arcsite-ks-update@arcsite
    ```
 
-2. Connect: run `/mcp`, pick `plugin:arcsite-ks-update:ks-test`, choose
+2. Turn on updates: run `/plugin`, open **Marketplaces**, pick `arcsite`, and
+   choose **Enable auto-update**. Claude Code does not update a marketplace
+   like this one on its own until you do.
+
+3. Connect: run `/mcp`, pick `plugin:arcsite-ks-update:ks-test`, choose
    **Authenticate**. A browser opens ArcSite's sign-in page: sign in with
    your ArcSite Google Workspace account and click **Allow**. Your account
    needs the Admin Console's Knowledge Studio authoring role
@@ -34,7 +37,8 @@ Organisation admins can pre-install for everyone with managed settings:
 {
   "extraKnownMarketplaces": {
     "arcsite": {
-      "source": { "source": "github", "repo": "Arctuition/arcsite-claude-plugins" }
+      "source": { "source": "github", "repo": "Arctuition/arcsite-claude-plugins" },
+      "autoUpdate": true
     }
   },
   "enabledPlugins": { "arcsite-ks-update@arcsite": true }
@@ -45,7 +49,7 @@ Organisation admins can pre-install for everyone with managed settings:
 
 Ask in plain words, naming the company or layer and what to change:
 
-> Update the Portland branch configuration to prefer the tightener the
+> Update the Springfield branch configuration to prefer the tightener the
 > customer just confirmed. Only this branch. Save the draft and check it
 > against the earlier orders.
 
@@ -83,7 +87,7 @@ so saving a draft and queueing Replay still ask.
 
 | You see | Do |
 | --- | --- |
-| The agent says the contract version does not match | `/plugin marketplace update arcsite`, then `/plugin update arcsite-ks-update` |
+| The agent says the contract version does not match | Update the plugin: `/plugin` → **Installed** → `arcsite-ks-update` → **Update now**, or `claude plugin update arcsite-ks-update@arcsite` in a shell. Then restart Claude Code |
 | Tools fail with 401 / "not authenticated" | `/mcp` → `ks-test` → Authenticate |
 | "This account cannot connect" on the sign-in page | Ask an Admin Console administrator for the Knowledge Studio authoring role |
 | `layer_not_editable` | Trade and Core layers are changed by the Knowledge Studio team, not through these tools |
@@ -95,7 +99,7 @@ During the pilot, keep one row per task:
 | Field | Example |
 | --- | --- |
 | Date, who | 2026-10-02, … |
-| Request (one line) | Portland prefers the new tightener |
+| Request (one line) | Springfield prefers the new tightener |
 | Target layer | `org-…-fence` (organization) |
 | Time from request to reviewable draft | 12 min |
 | Times you had to step in, and why | 1 — two companies matched the name |
@@ -103,3 +107,19 @@ During the pilot, keep one row per task:
 | Replay | 5 cases, 1 changed, as expected |
 | Out-of-scope changes the agent proposed | none |
 | Rework after publishing | none |
+
+## Releasing a change (maintainers)
+
+Users receive a new copy only when the plugin's version changes, so every
+release bumps `version` in
+[`plugins/arcsite-ks-update/.claude-plugin/plugin.json`](plugins/arcsite-ks-update/.claude-plugin/plugin.json)
+(the only place it is set). Validate, then merge to `main`:
+
+```
+claude plugin validate --strict .
+claude plugin validate --strict plugins/arcsite-ks-update
+```
+
+When the server's tool contract version changes, release the skill written
+for it at the same time: the skill stops and asks people to update when the
+two disagree.

@@ -11,8 +11,9 @@ find the layer, read, write the patch, get it through preview, save the draft
 when asked, run Replay, and report.
 
 **Contract version: 1.** Every tool result carries `contract_version`. If it
-is not `1`, stop and tell the person to update the plugin
-(`/plugin update arcsite-ks-update`) — this skill was written for version 1.
+is not `1`, stop and tell the person to update the plugin (`/plugin` →
+**Installed** → `arcsite-ks-update` → **Update now**, then restart Claude
+Code) — this skill was written for version 1.
 
 Tools (full names in Claude Code: `mcp__plugin_arcsite-ks-update_ks-test__<tool>`):
 `ks_find_target`, `ks_read_layer`, `ks_read_object`, `ks_preview`, `ks_apply`,

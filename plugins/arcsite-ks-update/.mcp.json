@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "ks-test": {
+      "type": "http",
+      "url": "https://admin-test.arcsite.com/manage/ks-mcp/mcp"
+    }
+  }
+}

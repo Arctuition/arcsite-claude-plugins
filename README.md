@@ -101,6 +101,7 @@ so saving a draft and queueing Replay still ask.
       "mcp__plugin_arcsite-ks-update_ks-test__ks_read_layer",
       "mcp__plugin_arcsite-ks-update_ks-test__ks_read_object",
       "mcp__plugin_arcsite-ks-update_ks-test__ks_preview",
+      "mcp__plugin_arcsite-ks-update_ks-test__ks_replay_results",
       "mcp__plugin_arcsite-ks-update_ks-test__ks_applies"
     ]
   }

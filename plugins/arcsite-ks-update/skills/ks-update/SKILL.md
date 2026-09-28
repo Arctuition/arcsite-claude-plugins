@@ -166,7 +166,10 @@ of the task is saved:
 3. Poll `ks_replay_results` `action: status` with the same
    `release_organization_ids` until no case is `queued` or `running`, then read
    `action: case_diff` (same ids) for one changed case per company; read more
-   only when the first does not explain the change.
+   only when the first does not explain the change. A handful of orders takes a
+   minute or two. Keep calling `status` — it only reads, and answers at once —
+   and do not end your turn to wait: the person would have to come back and
+   ask. Stop polling only if nothing has moved for ten minutes, and say so.
 
 A release run's result is the release's effect on those orders: it reads no
 draft outside the release (another person's unpublished Trade edit is not in

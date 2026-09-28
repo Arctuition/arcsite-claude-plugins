@@ -77,10 +77,13 @@ Ask in plain words, naming the company or layer and what to change:
 > against the earlier orders.
 
 Say "save the draft" when you want the change written; otherwise the agent
-only analyses and previews. The agent never publishes: it ends with a release
-plan and Console links, and you publish in the Console from the changed
-layer's Versions module, where the Release plan card publishes every layer in
-the plan in one go.
+only analyses and previews. The agent never publishes. It ends with what
+publishing will do — what each layer ships (anyone else's unpublished edits
+included), which companies move and which do not, and Replay of real orders
+against exactly what the release publishes — plus a release note to paste and
+the Console link. You publish in the Console from the changed layer's Versions
+module, where the Release plan card publishes every layer in the plan in one
+go.
 
 A Rule at `review_required` does not stop an order: the order completes as
 "Ready with warnings". If someone must sign off before the order can go

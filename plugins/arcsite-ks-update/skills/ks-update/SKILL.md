@@ -10,11 +10,11 @@ person asking (usually CS) owns the business decisions and the release; you
 find the layer, read, write the patch, get it through preview, save the draft
 when asked, run Replay, and report.
 
-**Contract version: 2.** Every tool result carries `contract_version`. If it
-is higher than `2`, stop and tell the person to update the plugin (in a
+**Contract version: 3.** Every tool result carries `contract_version`. If it
+is higher than `3`, stop and tell the person to update the plugin (in a
 terminal, `claude plugin update arcsite-ks-update@arcsite`, then start a new
 session). If it is lower, the server has not been updated yet: stop and say
-so. This skill was written for version 2.
+so. This skill was written for version 3.
 
 Tools (full names in Claude Code: `mcp__plugin_arcsite-ks-update_ks-test__<tool>`):
 `ks_find_target`, `ks_read_layer`, `ks_read_object`, `ks_preview`, `ks_apply`,
@@ -136,7 +136,8 @@ lower severity).
 Apply when all hold: the person asked to change and save; the preview is
 `applicable`; every change maps to the request (section 5). Call `ks_apply`
 with the same document and the preview's `context_checksum` and
-`diff_checksum`, then `ks_replay`. Publishing stays in the Console.
+`diff_checksum`. Then get the release plan and Replay the release (section 7).
+Publishing stays in the Console.
 
 - **Lost response**: never re-send blindly. Call `ks_applies`; if your
   `diff_checksum` is there, it landed. If not, preview again and re-send only
@@ -149,34 +150,47 @@ with the same document and the preview's `context_checksum` and
   `ks_preview` → `ks_apply`. If the layer moved since, the undo is refused as
   drift; say the undo needs to be redone by hand.
 
-## 7. Replay
+## 7. Replay the release
 
-With several layers changed, run `ks_replay` once, on the highest of them:
-its cases are every company that reads it, and each case reads all the drafts
-below it. Run it on another changed layer too only when that layer is not
-below the first.
+Replay what publishing will do, not the drafts as they stand. Once every draft
+of the task is saved:
 
-After `ks_replay`, poll `ks_replay_results` `action: status` until no case is
-`queued` or `running`, then read `ks_replay_results` `action: case_diff` for
-one changed case per company; read more
-only when the first does not explain the change. Report by company; say
-"no coverage" for `companies_without_cases`; show failures, pending baselines
-and skipped cases as they are — never "all passed".
+1. Get `ks_read_layer` `part: release_plan` on the highest layer you changed,
+   with `target_organization_ids`: the companies the request is for. If it
+   named none, every company the change is meant for — for a layer-wide change,
+   all of the plan's `candidates`.
+2. Call `ks_replay` on that layer with the same ids as
+   `release_organization_ids`. It runs the orders of every company the release
+   moves — targeted or not — each against exactly what it publishes: the
+   plan's layers as drafts, every other layer as published.
+3. Poll `ks_replay_results` `action: status` with the same
+   `release_organization_ids` until no case is `queued` or `running`, then read
+   `action: case_diff` (same ids) for one changed case per company; read more
+   only when the first does not explain the change. A handful of orders takes a
+   minute or two. Keep calling `status` — it only reads, and answers at once —
+   and do not end your turn to wait: the person would have to come back and
+   ask. Stop polling only if nothing has moved for ten minutes, and say so.
 
-What a run read is **unknown** layer by layer (`input_identity`), and Replay
-reads every layer's draft in the company's stack, not only yours. If
-`current_only` shows unpublished changes on layers outside the release plan,
-name them as current state and write: "Cannot verify that Replay read what the
-release plan will publish; do not take this as the result of the release."
-Never count someone else's draft as the effect of your patch. No difference
-does not prove the change is right.
+A release run's result is the release's effect on those orders: it reads no
+draft outside the release (another person's unpublished Trade edit is not in
+it), so there is nothing to discount. `outdated` means a draft in the release
+changed since the run: run it again before handing over. A run that fails
+because the release needs something only an unpublished layer outside it
+holds is a publish that would fail too: name that layer (the plan's
+`upstream_warnings`) and stop.
+
+Report by company; say "no coverage" for `companies_without_cases`; show
+failures, pending baselines and skipped cases as they are — never "all
+passed". No difference does not prove the change is right. `ks_replay`
+without `release_organization_ids` runs against every layer's draft; use it
+only when asked to check the drafts as they stand, and then say its result
+includes drafts the release would not publish.
 
 `case_diff` lists only what moved. A case showing no difference on a
 component does not mean the case lacks it — after an undo or a revert, back to
-the baseline is the expected result. Say "no coverage" only for
-`companies_without_cases`. A Slot that went to `pending_facts` names what it
-waits on in `missing_facts`: check whether your patch touched those facts
-before saying the change is or is not yours. A case that failed with
+the baseline is the expected result. A Slot that went to `pending_facts` names
+what it waits on in `missing_facts`: check whether your patch touched those
+facts before saying the change is or is not yours. A case that failed with
 `answers_out_of_date` lists the `removed_answers`; `case_diff` shows the
 order's `answers`. If your patch narrowed one of those questions, a real order
 chose a value you took away: that is your change's effect — report it and ask.
@@ -188,34 +202,55 @@ and say what would confirm it: resolve a job in the prototype where the Rule's
 condition holds (or the task applies), and check the readiness and the
 warnings or tasks the job shows.
 
-## 8. Hand over
+## 8. Hand over: what publishing will do
 
-Get `ks_read_layer` `part: release_plan` with the target companies'
-`target_organization_ids` (without them it only lists candidates). Show the
-steps in order (layer, reason: own changes / re-pin only, current → expected
-pins, each layer's whole unpublished content — other people's edits ship too),
-the companies that move although not targeted (`affected_non_targets`), and the
-companies this release does not update (`stays_on_current`). If the person does
-not accept a non-targeted company moving, stop and hand it back to them — you
-cannot keep that company on the old version.
+Publishing is the person's click; knowing what it does is your job. Before
+handing over, work the release plan (section 7, step 1) into a **publish
+impact** the person can act on without opening anything:
 
-A company in `stays_on_current` is not out of reach: it reads a changed layer
-through one this release does not publish, stays on the old version for now,
-and gets the change the next time that layer publishes, whoever publishes it
-and for whatever reason. Name each one with the layer it waits on, say that,
-and ask whether it should get the change now (tick it in the Release plan
-card) or is meant to stay as it is — in which case the change it would pick up
-later needs a decision of its own. Publishing is done in the Console, in one
-go: on the release plan's `console_url` (the changed layer's Versions module),
-the person ticks the same companies in the Release plan card, presses Compute
-plan again, reviews each step's whole draft, and publishes every step at once.
-Give that link; don't tell them to publish layer by layer.
+- **What ships, layer by layer.** Each `own_changes` step's `ships.records` is
+  everything that layer's draft publishes, whoever wrote it. Mark each record
+  as this task's (you touched it) or not. For each one that is not, say what
+  it changes (its `fields`, before → after) and that it ships with this
+  release; if `ships.more` is true, say how many more there are and point to
+  that layer's Versions module. Someone else's edit shipping is a decision for
+  the person — ask if it looks unfinished or unrelated. `repin` steps ship
+  nothing of their own.
+- **Who moves, and what reaches them.** Every company the release moves:
+  the targets, and `affected_non_targets` (bound to a layer in the plan, moved
+  whether ticked or not). For each, which of this release's changes it reads
+  — the ones on layers above it in the plan. If the person does not accept a
+  non-targeted company moving, stop and hand it back to them — you cannot keep
+  that company on the old version.
+- **Who does not move.** A company in `stays_on_current` is not out of reach: it
+  reads a changed layer through one this release does not publish, stays on the
+  old version for now, and gets the change the next time that layer publishes,
+  whoever publishes it and for whatever reason. Name each one with the layer it
+  waits on, say that, and ask whether it should get the change now (tick it in
+  the Release plan card) or is meant to stay as it is — in which case the change
+  it would pick up later needs a decision of its own.
+- **Real orders.** The release Replay (section 7), by company.
+- **Not verified by Replay**, and how to check each.
+- **Upstream.** Layers above with unpublished content this release does not
+  include (`upstream_warnings`), and whether the change depends on any of them.
 
-With several layers changed, get the release plan of the highest of them, with
+With several layers changed, use the release plan of the highest of them, with
 every target company. Each layer you changed must be one of its steps with
 `own_changes`. If one is not (it is not below that layer, or no chosen company
-reads it), get that layer's release plan too and give both links: each
-publishes in one go, but they are two releases.
+reads it), get that layer's release plan too, give its impact as well, and give
+both links: each publishes in one go, but they are two releases.
+
+**Release note.** Write one in English for the Release plan card's Release
+note field, ready to paste: a line per layer that changes, saying what changed
+and for whom (for example "Master Halco: residential top rail defaults to
+1-5/8 in, as Master Halco confirmed"), then "Also ships: …" for records that
+ship but were not this task's. Say the person can edit it.
+
+Publishing is done in the Console, in one go: on the release plan's
+`console_url` (the changed layer's Versions module), the person ticks the same
+companies in the Release plan card, presses Compute plan again, reviews each
+step's whole draft, pastes the release note, and publishes every step at once.
+Give that link; don't tell them to publish layer by layer.
 
 ## Summary (always this shape)
 
@@ -224,16 +259,16 @@ publishes in one go, but they are two releases.
   only; **not published**
 - **Why:** each request line → what changed (or "not done" with the reason)
 - **Requirements:** each one marked done / needs confirmation / cannot be expressed now
-- **Affects:** companies bound directly; downstream layers and their companies
-  (with the version they read now — they move only when those layers republish,
-  and then they pick this change up whoever publishes)
-- **Replay:** per company: changed / unchanged / failed / no coverage; input
-  identity unknown (aggregate fingerprint for reference); whether this can be
-  taken as the release result (no, if other drafts were read)
+- **Publish impact:** what ships per layer (this task's / also ships), who
+  moves and what reaches each, who does not move and when they would, upstream
+  not included (section 8)
+- **Replay (release):** per company: changed / unchanged / failed / no
+  coverage, read against exactly what the release publishes
 - **Undo:** each layer's apply_id, and that `ks_applies` returns its undo
   document
 - **To publish:** the release plan steps, and the Versions link where the
   Release plan card publishes them in one go
+- **Release note:** the English note to paste
 - **Open items:** anything unresolved
 
 Format valid, Replay finished, and business-correct are three different

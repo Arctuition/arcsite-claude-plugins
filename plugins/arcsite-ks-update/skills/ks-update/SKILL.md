@@ -195,9 +195,17 @@ Get `ks_read_layer` `part: release_plan` with the target companies'
 steps in order (layer, reason: own changes / re-pin only, current → expected
 pins, each layer's whole unpublished content — other people's edits ship too),
 the companies that move although not targeted (`affected_non_targets`), and the
-layers that stay on their current pins. If the person does not accept a
-non-targeted company moving, stop and hand it back to them — you cannot keep
-that company on the old version. Publishing is done in the Console, in one
+companies this release does not update (`stays_on_current`). If the person does
+not accept a non-targeted company moving, stop and hand it back to them — you
+cannot keep that company on the old version.
+
+A company in `stays_on_current` is not out of reach: it reads a changed layer
+through one this release does not publish, stays on the old version for now,
+and gets the change the next time that layer publishes, whoever publishes it
+and for whatever reason. Name each one with the layer it waits on, say that,
+and ask whether it should get the change now (tick it in the Release plan
+card) or is meant to stay as it is — in which case the change it would pick up
+later needs a decision of its own. Publishing is done in the Console, in one
 go: on the release plan's `console_url` (the changed layer's Versions module),
 the person ticks the same companies in the Release plan card, presses Compute
 plan again, reviews each step's whole draft, and publishes every step at once.
@@ -217,7 +225,8 @@ publishes in one go, but they are two releases.
 - **Why:** each request line → what changed (or "not done" with the reason)
 - **Requirements:** each one marked done / needs confirmation / cannot be expressed now
 - **Affects:** companies bound directly; downstream layers and their companies
-  (with the version they read now — they move only when those layers republish)
+  (with the version they read now — they move only when those layers republish,
+  and then they pick this change up whoever publishes)
 - **Replay:** per company: changed / unchanged / failed / no coverage; input
   identity unknown (aggregate fingerprint for reference); whether this can be
   taken as the release result (no, if other drafts were read)

@@ -78,10 +78,11 @@ which layer it belongs in, ask about that line.
    stable_id, they are all returned — read them all; never pick one at random.
 4. `part: schema` for each kind you will write, and `part: guide` sections
    when a rule is unclear (section list first, then one section). A schema
-   comes whole: every shared shape it uses (domains, values, conditions) is
-   under its own `$defs` as `common.<name>`, and there is an `example` for
-   most kinds, `delegated_setting` and `layer_setting` included. Write from
-   those; do not guess a shape.
+   comes whole: every shared shape it uses (domains, values, conditions, tags)
+   is under its own `$defs` as `<file>.<name>` (`common.valueDomain`,
+   `interchange.tags`), and most kinds, `delegated_setting` and
+   `layer_setting` included, have an `example` (null where there is none).
+   Write from those; do not guess a shape.
 
 5. Check the change can take effect for the companies it is meant for. A
    Rule, a default or a narrowing only acts when its condition holds: read
@@ -90,8 +91,9 @@ which layer it belongs in, ask about that line.
    settings mean it can never fire there, say so and ask before writing a
    change that would do nothing.
 
-Every read returns `authoring_checksum`. If it changes while you read,
-somebody else edited the layer: re-read before writing.
+The overview (in `baseline`), `part: objects` and `ks_read_object` return
+`authoring_checksum`. If it changes while you read, somebody else edited the
+layer: re-read before writing.
 
 ## 3. Write the smallest patch
 
@@ -118,9 +120,11 @@ it is not empty, says what was expected (a wrong domain names its keys in
 `details.expected`): fix from that and the schema, not by trying variants. If
 two rounds in a row fail
 on the same kind of issue with nothing new learned, stop and show the last
-issues verbatim. `baseline_drift` means the layer moved: re-read the overview
-and the records, redo the patch on the new baseline, and show the person any
-difference they already saw if it changed.
+issues verbatim. A preview refused with `baseline_drift` means the layer was
+edited (`baseline.authoring_checksum`) or the packages it reads moved
+(`baseline.ancestors`): re-read the overview and the records, redo the patch
+on the new baseline, and show the person any difference they already saw if
+it changed.
 
 ## 5. Check yourself before saving (no need to ask the person)
 
@@ -143,7 +147,9 @@ lower severity).
 Apply when all hold: the person asked to change and save; the preview is
 `applicable`; every change maps to the request (section 5). Call `ks_apply`
 with the same document and the preview's `context_checksum` and
-`diff_checksum`. Then get the release plan and Replay the release (section 7).
+`diff_checksum`. An apply refused with `preview_out_of_date` means the layer
+moved after the preview: preview again and check the result before
+re-applying. Then get the release plan and Replay the release (section 7).
 Publishing stays in the Console.
 
 - **Lost response**: never re-send blindly. Call `ks_applies`; if your
@@ -154,7 +160,8 @@ Publishing stays in the Console.
   means it was undone). To write it back after an undo, ask the person first,
   then send `reapply_of` with the receipt's `id`.
 - **Undo**: `ks_applies` with the `apply_id` returns the undo document →
-  `ks_preview` → `ks_apply`. If the layer moved since, the undo is refused as
+  `ks_preview` → `ks_apply`. The list's `undo_current` says whether the undo
+  still fits the layer. If the layer moved since, the undo is refused as
   drift; say the undo needs to be redone by hand.
 
 ## 7. Replay the release
@@ -166,7 +173,9 @@ of the task is saved:
    with `target_organization_ids`: the companies the request is for. If it
    named none, every company the change is meant for — for a layer-wide change,
    all of the plan's `candidates`. Keep its `plan_checksum` and
-   `release_organization_ids`.
+   `release_organization_ids`. A company in `unreachable_organization_ids`
+   does not read this layer and was dropped from the plan: the company or the
+   layer is wrong — stop and ask.
 2. Call `ks_replay` on that layer with `release_organization_ids` copied from
    the plan exactly as it returned them — never assemble the ids yourself. It
    runs the orders of every company the release moves — targeted or not —
@@ -176,7 +185,15 @@ of the task is saved:
    versions their packages pin — not every layer at its active version.
 3. Call `ks_replay_results` `action: status` with the same
    `release_organization_ids` and `wait_seconds: 15`, again and again, until no
-   case is `queued` or `running`; then read `action: case_diff` (same ids) for
+   case is `queued`, `running` or `baseline_pending`. A case that owes a
+   baseline is not run against the release: `ks_replay` lists it under
+   `recovered` and runs its baseline instead (`skipped` when it could not be
+   queued: a run is already going, or its baseline failed), and `status`
+   shows `baseline_pending` until the baseline lands. A case
+   that shows `not_run` has no run of this release yet: call `ks_replay` again
+   with the same ids and keep waiting. Report `baseline_failed` as it is.
+   Then read `action: case_diff` (same ids, and the case's `case_id` from
+   `status`; `page` when `components` or `skus` has more than one page) for
    one changed case per company; read more only when the first does not
    explain the change. A handful of orders takes a minute or two. Do not end
    your turn to wait: the person would have to come back and ask. Stop only if
@@ -185,13 +202,17 @@ of the task is saved:
 A release run's result is the release's effect on those orders: it reads no
 draft outside the release (another person's unpublished Trade edit is not in
 it), so there is nothing to discount. `status` lists, per company, the
-version of every layer a run reads (`reads.companies`). That is the current
-plan, worked out when you ask — no run records its versions — so it is the
-evidence of what was run only for cases with `ran_on_current_reads: true`
-(status `unchanged` or `changed`); copy it into the summary for those. For
-any other case it is only what the next run will read. `outdated` means the stack the run
-read has changed since: a draft in the release was edited, or an upstream
-the release pins published a new version. A publish above that this release
+version of every layer a run of its cases would read now (`reads.companies`).
+That is the current plan, worked out when you ask, not a record of what any
+run read — no run records its versions. `matches_current_fingerprint: true`
+(status `unchanged` or `changed`) says the fingerprint the run took when it
+started equals today's: the sign its result belongs to this plan, not proof of
+what it read. Give the plan in the summary for those cases as the plan their
+results belong to; for any other case it is only what the next run will read.
+`outdated` means the stack the run read has changed since: a draft in the
+release was edited, or an upstream the release pins published a new version;
+or the baseline it compared against is no longer the one in force (the
+company's layer published or rolled back). A publish above that this release
 does not read does not count. Run it again before handing over. A run that
 fails because the release needs something only an unpublished layer outside it
 holds is a publish that would fail too: name that layer (the plan's
@@ -206,12 +227,17 @@ includes drafts the release would not publish.
 
 `case_diff` lists only what moved. A case showing no difference on a
 component does not mean the case lacks it — after an undo or a revert, back to
-the baseline is the expected result. A Slot that went to `pending_facts` names
-what it waits on in `missing_facts`: check whether your patch touched those
-facts before saying the change is or is not yours. A case that failed with
-`answers_out_of_date` lists the `removed_answers`; `case_diff` shows the
-order's `answers`. If your patch narrowed one of those questions, a real order
-chose a value you took away: that is your change's effect — report it and ask.
+the baseline is the expected result. `catalog_changed: true` means both runs
+read the same knowledge and still answered differently: the Product catalog
+moved, not your patch — report that difference as the catalog's. A Slot that
+went to `pending_facts` names what it waits on in `missing_facts`: check
+whether your patch touched those facts before saying the change is or is not
+yours. A case that failed with `answers_out_of_date` (or
+`instance_answers_out_of_date`, for one instance's inputs) lists the
+`removed_answers` in its `release_run.error` in `status`; `case_diff` shows
+the order's `answers`. If your patch narrowed one of those questions, a real
+order chose a value you took away: that is your change's effect — report it
+and ask.
 
 Replay compares components and SKUs only. A change that moves neither — a
 Rule's severity or message, a Workflow task — leaves every case unchanged, so
@@ -234,27 +260,35 @@ impact** the person can act on without opening anything:
   release withdraws upstream is listed as removed. Mark each record
   as this task's (you touched it) or not. For each one that is not, say what
   it changes (its `fields`, before → after) and that it ships with this
-  release; if `ships.more` is true, say how many more there are and point to
-  that layer's Versions module. Someone else's edit shipping is a decision for
-  the person — ask if it looks unfinished or unrelated. `repin` steps ship
-  nothing of their own.
+  release; if `ships.more` is true, say how many more there are (`ships.total`
+  counts them all) and point to that layer's Versions module. Someone else's
+  edit shipping is a decision for the person — ask if it looks unfinished or
+  unrelated. `repin` steps ship nothing of their own. A step with
+  `ships.unavailable` has a draft that cannot be built, and the publish would
+  refuse for that reason: report it and stop.
 - **Who moves, and what reaches them.** Every company the release moves:
-  the targets, and `affected_non_targets` (bound to a layer in the plan, moved
-  whether ticked or not). For each, which of this release's changes it reads
+  the targets, and `affected_non_targets` (bound to a layer this release
+  publishes, moved whether ticked or not). For each, which of this release's changes it reads
   — the ones on layers above it in the plan. If the person does not accept a
   non-targeted company moving, stop and hand it back to them — you cannot keep
   that company on the old version.
-- **Who does not move.** A company in `stays_on_current` is not out of reach: it
-  reads a changed layer through one this release does not publish, stays on the
-  old version for now, and gets the change the next time that layer publishes,
-  whoever publishes it and for whatever reason. Name each one with the layer it
-  waits on, say that, and ask whether it should get the change now (tick it in
-  the Release plan card) or is meant to stay as it is — in which case the change
-  it would pick up later needs a decision of its own.
+- **Who does not move.** Each `stays_on_current` entry is a layer this release
+  does not publish (`layer`), the versions it keeps (`keeps`), and the
+  companies that read through it (`organizations`). Those companies are not
+  out of reach: they read a changed layer through that one, stay on the old
+  version for now, and get the change the next time that layer publishes,
+  whoever publishes it and for whatever reason. Name each company with the
+  layer it waits on, say that, and ask whether it should get the change now
+  (tick it in the Release plan card) or is meant to stay as it is — in which
+  case the change it would pick up later needs a decision of its own.
 - **Real orders.** The release Replay (section 7), by company.
 - **Not verified by Replay**, and how to check each.
-- **Upstream.** Layers above with unpublished content this release does not
-  include (`upstream_warnings`), and whether the change depends on any of them.
+- **Upstream.** `upstream_warnings`: `upstream_source_drift` is a layer above
+  with unpublished content this release does not include — say whether the
+  change depends on it; `upstream_pin_drift` is a layer above that still pins
+  older packages (`pinned_requires` against `requires`) and needs publishing
+  again, even with nothing of its own, before this layer reads the newer ones
+  through it.
 
 With several layers changed, use the release plan of the highest of them, with
 every target company. Each layer you changed must be one of its steps with
@@ -294,8 +328,9 @@ layer.
   moves and what reaches each, who does not move and when they would, upstream
   not included (section 8)
 - **Replay (release):** per company: changed / unchanged / failed / no
-  coverage, and the versions each run read (`reads.companies`, for cases
-  with `ran_on_current_reads: true`; say which cases need running again)
+  coverage, and the plan's versions (`reads.companies`) for the cases with
+  `matches_current_fingerprint: true` — the plan their results belong to, not
+  a record of what they read; say which cases need running again
 - **Undo:** each layer's apply_id, and that `ks_applies` returns its undo
   document
 - **To publish:** the release plan steps, the `console_url` (companies

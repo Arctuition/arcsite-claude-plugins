@@ -80,10 +80,17 @@ Say "save the draft" when you want the change written; otherwise the agent
 only analyses and previews. The agent never publishes. It ends with what
 publishing will do — what each layer ships (anyone else's unpublished edits
 included), which companies move and which do not, and Replay of real orders
-against exactly what the release publishes — plus a release note to paste and
-the Console link. You publish in the Console from the changed layer's Versions
-module, where the Release plan card publishes every layer in the plan in one
-go.
+against the stack the release leaves in force, with the version of every
+layer each company will read — plus a release note to paste, a Plan id and
+the Console link.
+
+The link opens the changed layer's Release plan card with the companies
+ticked and the plan computed. Check that the card's Plan id is the one the
+agent gave, read What ships and the Release Replay there, paste the note and
+publish every layer in one go. A different Plan id means something changed
+after the agent read the plan; if it changes while you review, the publish is
+refused and the card shows the new plan and what moved, so nothing ships that
+nobody reviewed.
 
 A Rule at `review_required` does not stop an order: the order completes as
 "Ready with warnings". If someone must sign off before the order can go

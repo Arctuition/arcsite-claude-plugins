@@ -77,7 +77,11 @@ which layer it belongs in, ask about that line.
    layer**. If several layers hold a record under the same kind and
    stable_id, they are all returned — read them all; never pick one at random.
 4. `part: schema` for each kind you will write, and `part: guide` sections
-   when a rule is unclear (section list first, then one section).
+   when a rule is unclear (section list first, then one section). A schema
+   comes whole: every shared shape it uses (domains, values, conditions) is
+   under its own `$defs` as `common.<name>`, and there is an `example` for
+   most kinds, `delegated_setting` and `layer_setting` included. Write from
+   those; do not guess a shape.
 
 5. Check the change can take effect for the companies it is meant for. A
    Rule, a default or a narrowing only acts when its condition holds: read
@@ -109,7 +113,10 @@ somebody else edited the layer: re-read before writing.
 
 ## 4. Preview until it is right
 
-`ks_preview` → fix the `issues` → preview again. If two rounds in a row fail
+`ks_preview` → fix the `issues` → preview again. An issue's `details`, where
+it is not empty, says what was expected (a wrong domain names its keys in
+`details.expected`): fix from that and the schema, not by trying variants. If
+two rounds in a row fail
 on the same kind of issue with nothing new learned, stop and show the last
 issues verbatim. `baseline_drift` means the layer moved: re-read the overview
 and the records, redo the patch on the new baseline, and show the person any
@@ -178,8 +185,11 @@ of the task is saved:
 A release run's result is the release's effect on those orders: it reads no
 draft outside the release (another person's unpublished Trade edit is not in
 it), so there is nothing to discount. `status` lists, per company, the
-version of every layer a run reads (`reads.companies`) — copy it into the
-summary as the evidence of what was run. `outdated` means the stack the run
+version of every layer a run reads (`reads.companies`). That is the current
+plan, worked out when you ask — no run records its versions — so it is the
+evidence of what was run only for cases with `ran_on_current_reads: true`
+(status `unchanged` or `changed`); copy it into the summary for those. For
+any other case it is only what the next run will read. `outdated` means the stack the run
 read has changed since: a draft in the release was edited, or an upstream
 the release pins published a new version. A publish above that this release
 does not read does not count. Run it again before handing over. A run that
@@ -260,12 +270,15 @@ ship but were not this task's. Say the person can edit it.
 
 Publishing is done in the Console, in one go. The release plan's
 `console_url` opens the changed layer's Release plan card with these companies
-already ticked and the plan computed. The person checks that the card's
-**Plan id** is the first 8 characters of `plan_checksum` and that the steps
-match your summary, reads What ships and the Release Replay there, pastes the
-release note, and publishes every step at once. A different Plan id means
-someone changed something after you read the plan: they should re-read the
-steps before publishing. If the plan changes while they are reviewing, the
+already ticked and the plan computed, and it carries `plan_checksum`: the card
+compares its own plan with yours and says whether it is the plan you handed
+over. Its **Plan id** is the first 8 characters of `plan_checksum`. The person
+checks the steps match your summary, reads What ships and the Release Replay
+there, pastes the release note, and publishes every step at once. If the card
+says it is not the plan you handed over, someone changed something after you
+read it: ask them to come back so you read the release plan again and
+summarise it anew; publishing stays held until they confirm they reviewed the
+new plan. If the plan changes while they are reviewing, the
 publish is refused and the card shows the new plan and what moved; nothing
 ships that nobody reviewed. Give that link; don't tell them to publish layer by
 layer.
@@ -281,13 +294,15 @@ layer.
   moves and what reaches each, who does not move and when they would, upstream
   not included (section 8)
 - **Replay (release):** per company: changed / unchanged / failed / no
-  coverage, and the versions each run read (`reads.companies`)
+  coverage, and the versions each run read (`reads.companies`, for cases
+  with `ran_on_current_reads: true`; say which cases need running again)
 - **Undo:** each layer's apply_id, and that `ks_applies` returns its undo
   document
 - **To publish:** the release plan steps, the `console_url` (companies
-  ticked, plan computed), and **Plan `<first 8 of plan_checksum>`**: the same
-  Plan id on the card means it is the plan you read; a different one means
-  someone changed something after you, and the steps need reading again
+  ticked, plan computed and checked against yours), and **Plan `<first 8 of
+  plan_checksum>`**: the card says whether it is the plan you handed over; if
+  it is not, someone changed something after you, and the plan needs reading
+  and summarising again
 - **Release note:** the English note to paste
 - **Open items:** anything unresolved
 

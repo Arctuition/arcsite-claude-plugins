@@ -85,12 +85,14 @@ layer each company will read — plus a release note to paste, a Plan id and
 the Console link.
 
 The link opens the changed layer's Release plan card with the companies
-ticked and the plan computed. Check that the card's Plan id is the one the
-agent gave, read What ships and the Release Replay there, paste the note and
-publish every layer in one go. A different Plan id means something changed
-after the agent read the plan; if it changes while you review, the publish is
-refused and the card shows the new plan and what moved, so nothing ships that
-nobody reviewed.
+ticked and the plan computed, and the card checks it against the plan the
+agent read: it says so when they are the same, and when they are not it holds
+publishing until you have reviewed the new plan — ask the agent to read it
+again and summarise it. Read What ships and the Release Replay there (it also
+lists the companies the release moves that have no test case), paste the note
+and publish every layer in one go. If the plan changes while you review, the
+publish is refused and the card shows the new plan and what moved, so nothing
+ships that nobody reviewed.
 
 A Rule at `review_required` does not stop an order: the order completes as
 "Ready with warnings". If someone must sign off before the order can go

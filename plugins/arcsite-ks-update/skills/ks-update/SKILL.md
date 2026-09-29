@@ -10,11 +10,11 @@ person asking (usually CS) owns the business decisions and the release; you
 find the layer, read, write the patch, get it through preview, save the draft
 when asked, run Replay, and report.
 
-**Contract version: 3.** Every tool result carries `contract_version`. If it
-is higher than `3`, stop and tell the person to update the plugin (in a
+**Contract version: 4.** Every tool result carries `contract_version`. If it
+is higher than `4`, stop and tell the person to update the plugin (in a
 terminal, `claude plugin update arcsite-ks-update@arcsite`, then start a new
 session). If it is lower, the server has not been updated yet: stop and say
-so. This skill was written for version 3.
+so. This skill was written for version 4.
 
 Tools (full names in Claude Code: `mcp__plugin_arcsite-ks-update_ks-test__<tool>`):
 `ks_find_target`, `ks_read_layer`, `ks_read_object`, `ks_preview`, `ks_apply`,
@@ -158,24 +158,32 @@ of the task is saved:
 1. Get `ks_read_layer` `part: release_plan` on the highest layer you changed,
    with `target_organization_ids`: the companies the request is for. If it
    named none, every company the change is meant for — for a layer-wide change,
-   all of the plan's `candidates`.
-2. Call `ks_replay` on that layer with the same ids as
-   `release_organization_ids`. It runs the orders of every company the release
-   moves — targeted or not — each against exactly what it publishes: the
-   plan's layers as drafts, every other layer as published.
-3. Poll `ks_replay_results` `action: status` with the same
-   `release_organization_ids` until no case is `queued` or `running`, then read
-   `action: case_diff` (same ids) for one changed case per company; read more
-   only when the first does not explain the change. A handful of orders takes a
-   minute or two. Keep calling `status` — it only reads, and answers at once —
-   and do not end your turn to wait: the person would have to come back and
-   ask. Stop polling only if nothing has moved for ten minutes, and say so.
+   all of the plan's `candidates`. Keep its `plan_checksum` and
+   `release_organization_ids`.
+2. Call `ks_replay` on that layer with `release_organization_ids` copied from
+   the plan exactly as it returned them — never assemble the ids yourself. It
+   runs the orders of every company the release moves — targeted or not —
+   each against the stack the release leaves in force. Release layers are read
+   as drafts; every other layer as the release leaves it: a release layer's
+   direct dependencies at their active version, and above those through the
+   versions their packages pin — not every layer at its active version.
+3. Call `ks_replay_results` `action: status` with the same
+   `release_organization_ids` and `wait_seconds: 15`, again and again, until no
+   case is `queued` or `running`; then read `action: case_diff` (same ids) for
+   one changed case per company; read more only when the first does not
+   explain the change. A handful of orders takes a minute or two. Do not end
+   your turn to wait: the person would have to come back and ask. Stop only if
+   nothing has moved for ten minutes, and say so.
 
 A release run's result is the release's effect on those orders: it reads no
 draft outside the release (another person's unpublished Trade edit is not in
-it), so there is nothing to discount. `outdated` means a draft in the release
-changed since the run: run it again before handing over. A run that fails
-because the release needs something only an unpublished layer outside it
+it), so there is nothing to discount. `status` lists, per company, the
+version of every layer a run reads (`reads.companies`) — copy it into the
+summary as the evidence of what was run. `outdated` means the stack the run
+read has changed since: a draft in the release was edited, or an upstream
+the release pins published a new version. A publish above that this release
+does not read does not count. Run it again before handing over. A run that
+fails because the release needs something only an unpublished layer outside it
 holds is a publish that would fail too: name that layer (the plan's
 `upstream_warnings`) and stop.
 
@@ -209,7 +217,11 @@ handing over, work the release plan (section 7, step 1) into a **publish
 impact** the person can act on without opening anything:
 
 - **What ships, layer by layer.** Each `own_changes` step's `ships.records` is
-  everything that layer's draft publishes, whoever wrote it. Mark each record
+  everything that layer's package will carry that its active package does
+  not, whoever wrote it — measured as this release builds it, on the versions
+  it pins above. So a value the layer holds for a Setting only this release
+  declares upstream ships here too, and a value whose declaration this
+  release withdraws upstream is listed as removed. Mark each record
   as this task's (you touched it) or not. For each one that is not, say what
   it changes (its `fields`, before → after) and that it ships with this
   release; if `ships.more` is true, say how many more there are and point to
@@ -246,11 +258,17 @@ and for whom (for example "Master Halco: residential top rail defaults to
 1-5/8 in, as Master Halco confirmed"), then "Also ships: …" for records that
 ship but were not this task's. Say the person can edit it.
 
-Publishing is done in the Console, in one go: on the release plan's
-`console_url` (the changed layer's Versions module), the person ticks the same
-companies in the Release plan card, presses Compute plan again, reviews each
-step's whole draft, pastes the release note, and publishes every step at once.
-Give that link; don't tell them to publish layer by layer.
+Publishing is done in the Console, in one go. The release plan's
+`console_url` opens the changed layer's Release plan card with these companies
+already ticked and the plan computed. The person checks that the card's
+**Plan id** is the first 8 characters of `plan_checksum` and that the steps
+match your summary, reads What ships and the Release Replay there, pastes the
+release note, and publishes every step at once. A different Plan id means
+someone changed something after you read the plan: they should re-read the
+steps before publishing. If the plan changes while they are reviewing, the
+publish is refused and the card shows the new plan and what moved; nothing
+ships that nobody reviewed. Give that link; don't tell them to publish layer by
+layer.
 
 ## Summary (always this shape)
 
@@ -263,11 +281,13 @@ Give that link; don't tell them to publish layer by layer.
   moves and what reaches each, who does not move and when they would, upstream
   not included (section 8)
 - **Replay (release):** per company: changed / unchanged / failed / no
-  coverage, read against exactly what the release publishes
+  coverage, and the versions each run read (`reads.companies`)
 - **Undo:** each layer's apply_id, and that `ks_applies` returns its undo
   document
-- **To publish:** the release plan steps, and the Versions link where the
-  Release plan card publishes them in one go
+- **To publish:** the release plan steps, the `console_url` (companies
+  ticked, plan computed), and **Plan `<first 8 of plan_checksum>`**: the same
+  Plan id on the card means it is the plan you read; a different one means
+  someone changed something after you, and the steps need reading again
 - **Release note:** the English note to paste
 - **Open items:** anything unresolved
 

@@ -185,11 +185,15 @@ of the task is saved:
 A release run's result is the release's effect on those orders: it reads no
 draft outside the release (another person's unpublished Trade edit is not in
 it), so there is nothing to discount. `status` lists, per company, the
-version of every layer a run reads (`reads.companies`). That is the current
-plan, worked out when you ask — no run records its versions — so it is the
-evidence of what was run only for cases with `ran_on_current_reads: true`
-(status `unchanged` or `changed`); copy it into the summary for those. For
-any other case it is only what the next run will read. `outdated` means the stack the run
+version of every layer the release will read (`reads.companies`): the current
+plan, worked out when you ask. It is not a record of what any run read — no
+run records its versions, and what one read is unknown; never present it as
+"the versions the run read". `matches_current_fingerprint: true` (status
+`unchanged` or `changed`) means the fingerprint the run took when it started
+equals today's: the sign its result belongs to this plan, not proof of its
+input — a draft edited and put back while it ran would not show. Report the
+result with that caveat, and run again any case that does not match.
+`outdated` means the stack the run
 read has changed since: a draft in the release was edited, or an upstream
 the release pins published a new version. A publish above that this release
 does not read does not count. Run it again before handing over. A run that
@@ -294,8 +298,9 @@ layer.
   moves and what reaches each, who does not move and when they would, upstream
   not included (section 8)
 - **Replay (release):** per company: changed / unchanged / failed / no
-  coverage, and the versions each run read (`reads.companies`, for cases
-  with `ran_on_current_reads: true`; say which cases need running again)
+  coverage; the versions the release will read (`reads.companies`, the
+  current plan, not a record of the run); which cases do not match the
+  current fingerprint and need running again
 - **Undo:** each layer's apply_id, and that `ks_applies` returns its undo
   document
 - **To publish:** the release plan steps, the `console_url` (companies

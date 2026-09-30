@@ -127,7 +127,6 @@ so saving a draft and queueing Replay still ask.
 | The agent says the contract version does not match | Update the plugin: `/plugin` → **Installed** → `arcsite-ks-update` → **Update now**, or `claude plugin update arcsite-ks-update@arcsite` in a shell. Then restart Claude Code |
 | Tools fail with 401 / "not authenticated", or ks-test shows as needing sign-in | Connect ks-test again: the ks-test connector in the desktop app, or `/mcp` → `plugin:arcsite-ks-update:ks-test` → **Authenticate** in a terminal |
 | "This account cannot connect" on the sign-in page | Ask an Admin Console administrator for the Knowledge Studio authoring role |
-| `layer_not_editable` | Trade and Core layers are changed by the Knowledge Studio team, not through these tools |
 
 ## Pilot log
 

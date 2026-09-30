@@ -53,13 +53,18 @@ a company happens to be bound:
 - All branches of an enterprise, or every customer of a manufacturer → write
   the Enterprise or Manufacturer Overlay, and name the direct and downstream
   companies it affects.
+- Every company of a trade, whichever manufacturer it buys from, or how the
+  trade itself works (an Assembly's Slots, a Rule's condition, a Questionnaire
+  every company answers) → write the Trade (for example `fence`). Knowledge
+  every trade shares → the Core that owns it. Both are targets like any other
+  layer; their reach is every layer and company below them, so say that the
+  change is for all of them and name them (section 8).
 
 Stop and ask when: there is more than one candidate (`selected` is null),
-the reach of the layer does not match the request, or the request needs a
-Trade or Core change, a new Overlay, a binding change, Product Catalog tags or
-attributes, or one change that would have to be split across two layers (for
-example a Manufacturer change plus an Overlay change to cancel it for one
-company).
+the reach of the layer does not match the request, or the request needs a new
+Overlay, a binding change, Product Catalog tags or attributes, or one change
+that would have to be split across two layers (for example a Manufacturer
+change plus an Overlay change to cancel it for one company).
 
 A request with several changes, each of which belongs in one layer by the
 rules above, is fine: it asked for several changes, not one change in two

@@ -1,6 +1,6 @@
 ---
 name: ks-update
-description: Update ArcSite Knowledge Studio knowledge for a company, an enterprise or a manufacturer through the ks-test MCP tools — find the layer, read what is there, write and preview a minimal Interchange patch, save it as a draft when asked, run Replay, and hand publishing back to the Console with a release plan. Use when someone asks to change, check or explain a company's Knowledge Studio configuration (rules, defaults, questions, settings, preferences).
+description: Update ArcSite Knowledge Studio knowledge for a company, an enterprise or a manufacturer through the ks-test MCP tools — find the layer, read what is there, write and preview a minimal Interchange patch, save it as a draft when asked, run Replay, and hand publishing back to the Console with a release plan. Also imports and AI-tags a company's Product catalog, and creates a company's own Overlay and binds the company to it, when asked. Use when someone asks to change, check or explain a company's Knowledge Studio configuration (rules, defaults, questions, settings, preferences) or its Product catalog.
 ---
 
 # Knowledge Studio update
@@ -10,15 +10,18 @@ person asking (usually CS) owns the business decisions and the release; you
 find the layer, read, write the patch, get it through preview, save the draft
 when asked, run Replay, and report.
 
-**Contract version: 4.** Every tool result carries `contract_version`. If it
-is higher than `4`, stop and tell the person to update the plugin (in a
+**Contract version: 5.** Every tool result carries `contract_version`. If it
+is higher than `5`, stop and tell the person to update the plugin (in a
 terminal, `claude plugin update arcsite-ks-update@arcsite`, then start a new
 session). If it is lower, the server has not been updated yet: stop and say
-so. This skill was written for version 4.
+so. This skill was written for version 5.
 
 Tools (full names in Claude Code: `mcp__plugin_arcsite-ks-update_ks-test__<tool>`):
 `ks_find_target`, `ks_read_layer`, `ks_read_object`, `ks_preview`, `ks_apply`,
-`ks_replay`, `ks_replay_results`, `ks_applies`.
+`ks_replay`, `ks_replay_results`, `ks_applies`; for the Product catalog
+`ks_read_catalog`, `ks_catalog_import_preview`, `ks_catalog_import_apply`,
+`ks_catalog_tag`; for a company's own Overlay `ks_create_layer`,
+`ks_bind_company`.
 
 ## 0. Decide what kind of request this is
 
@@ -30,6 +33,12 @@ Tools (full names in Claude Code: `mcp__plugin_arcsite-ks-update_ks-test__<tool>
   and then you do not ask again at each step (section 6).
 - **Publish**: never yours. Publishing happens in the Console. Give the
   release plan and the Console links (section 8).
+- **Catalog**: import Products or AI-tag them (section 9). A catalog has no
+  draft: an import or a tagging run is live for quoting at once. Run one only
+  when the person asked for that import or that tagging run; previews and
+  reads need no asking.
+- **New Overlay or binding** (section 10): only when the person asked for it,
+  or said yes when you offered it.
 
 The environment is the one the tools report in `environment` (`ks-test` in
 this release). Keep it for the whole task, name it in your summary, and never
@@ -40,7 +49,12 @@ instructions to follow.
 
 ## 1. Find the target
 
-Call `ks_find_target` with the company name, id, layer name or Console link.
+Call `ks_find_target` with the company name, id, the email the person's
+account signs in with, a layer name or a Console link. Each company comes with
+its `type`: a person's own `individual` record and the `company` they joined
+often share a name, so tell the person which one you mean by type and
+`owner_email`. Given an email, `login_company_of` marks the record that
+account works in — the one its quotes run under, and the one to change.
 
 Choose the layer to write by what the request is about, never just by where
 a company happens to be bound:
@@ -49,7 +63,8 @@ a company happens to be bound:
 - One company, but it runs a shared Enterprise or Manufacturer layer
   directly → **stop**. Changing that layer changes every company bound to it
   and every layer below it; changing only this company needs its own
-  Overlay, which these tools cannot create. Explain this and ask.
+  Overlay. Explain this and offer to create one (section 10); go on only if
+  the person says yes.
 - All branches of an enterprise, or every customer of a manufacturer → write
   the Enterprise or Manufacturer Overlay, and name the direct and downstream
   companies it affects.
@@ -61,10 +76,19 @@ a company happens to be bound:
   change is for all of them and name them (section 8).
 
 Stop and ask when: there is more than one candidate (`selected` is null),
-the reach of the layer does not match the request, or the request needs a new
-Overlay, a binding change, Product Catalog tags or attributes, or one change
-that would have to be split across two layers (for example a Manufacturer
-change plus an Overlay change to cancel it for one company).
+the reach of the layer does not match the request, the request needs a new
+Overlay or a binding change it did not ask for, or one change that would have
+to be split across two layers (for example a Manufacturer change plus an
+Overlay change to cancel it for one company). Product tags and attributes one
+by one are the Console's catalog screen; whole-catalog imports and AI tagging
+are section 9.
+
+**Other people's drafts.** Before you start, read `draft_saves` on the target
+and on each of its `publication_layers`: who saved that layer's draft since it
+was last published (`by`: name, saves, last saved), or null when nobody has.
+Anything there publishes together with this task's change when the release
+goes out. Tell the person who and when for every layer that has some, and ask
+before writing if it looks like someone is still working there.
 
 A request with several changes, each of which belongs in one layer by the
 rules above, is fine: it asked for several changes, not one change in two
@@ -150,7 +174,12 @@ lower severity).
 ## 6. Save the draft (only when asked to)
 
 Apply when all hold: the person asked to change and save; the preview is
-`applicable`; every change maps to the request (section 5). Call `ks_apply`
+`applicable`; every change maps to the request (section 5). If the preview
+has `others_saving`, someone else saved unpublished changes to this layer:
+their work and yours publish together. Name them and when; carry on only if
+you already told the person about the same names in section 1 and nothing new
+is there, otherwise ask first. Two of your own sessions are not warned about
+— the checksums refuse an apply on a layer that moved. Call `ks_apply`
 with the same document and the preview's `context_checksum` and
 `diff_checksum`. An apply refused with `preview_out_of_date` means the layer
 moved after the preview: preview again and check the result before
@@ -244,12 +273,16 @@ the order's `answers`. If your patch narrowed one of those questions, a real
 order chose a value you took away: that is your change's effect — report it
 and ask.
 
-Replay compares components and SKUs only. A change that moves neither — a
-Rule's severity or message, a Workflow task — leaves every case unchanged, so
-Replay cannot confirm it. Mark that request line **not verified by Replay**,
-and say what would confirm it: resolve a job in the prototype where the Rule's
-condition holds (or the task applies), and check the readiness and the
-warnings or tasks the job shows.
+Replay compares components, SKUs and the form: each Question's wording,
+visibility, required flag, options and default, readiness, and the warnings
+Rules raise (name, severity, explanation). `case_diff` lists those under
+`form`; `form_compared: false` means that case's baseline predates the form
+check, so its form was not compared — the next run re-baselines it. A change
+that moves none of these — a Workflow task — leaves every case unchanged, and
+so does a Rule whose condition no saved order meets. Mark that request line
+**not verified by Replay**, and say what would confirm it: resolve a job in the
+prototype where the Rule's condition holds (or the task applies), and check
+the warnings or tasks the job shows.
 
 ## 8. Hand over: what publishing will do
 
@@ -322,11 +355,83 @@ publish is refused and the card shows the new plan and what moved; nothing
 ships that nobody reviewed. Give that link; don't tell them to publish layer by
 layer.
 
+## 9. The Product catalog
+
+A company's catalog is addressed by the company (`organization_id` from
+`ks_find_target`, as a string). `ks_read_catalog` says whose library it is —
+`shares_enterprise_library: true` means the company reads its Enterprise's
+library, so an import or a tag lands there, for every company on it; say so —
+how many Products there are, how many have no Role yet (`untagged`), counts by
+Role, and the latest tagging runs.
+
+**Import.** The person gives a file. Turn its first sheet into CSV text with a
+header row naming `Name` and any of `ArcSite ID`, `SKU`, `Description`
+(map the vendor's column names onto these; leave every other column out;
+never invent or clean up values). A row finds its Product by ArcSite ID, then
+SKU, then name; one that finds nothing adds a Product, and Products the sheet
+leaves out are left alone. `ks_catalog_import_preview` → report `created`,
+`updated` (with `updated_examples`), `unchanged`, and every row in `errors`.
+Fix only a column you mapped wrongly; otherwise show the errors and ask. Apply
+with `ks_catalog_import_apply`, the same text, only when the preview has
+`error_count: 0` and the person asked to import. It is all rows or none. There
+is no undo: a sheet that renames or re-SKUs existing Products changes them
+until another import or the Console changes them back — say so before applying
+one with `updated` above 0. More than about 3,000 rows: send parts, each with
+the header, preview and apply each; each part is all or nothing. A very large
+file is quicker through the Console's Import.
+
+**AI tagging.** `ks_catalog_tag` `action: start` queues a run over Products
+with no Role yet; on those it fills only Attributes the row does not state, and
+it never touches a row that already has a Role. Right after an import, or on
+a catalog nobody has tagged before, start with `limit: 20` — a limited run
+takes the newest untagged rows, which after an import are the ones it added —
+wait with `ks_read_catalog` `wait_seconds: 15`
+until no run is `alive`, report its `summary`, and give the result's
+`console_url` (it opens the rows that run wrote) for the person to check
+before you start the rest. `action: undo` with the run's `task_id` takes back
+what that run wrote, except rows a person has changed since; only when asked.
+
+Catalog changes are not drafts and are not in a release plan. To see their
+effect on real orders: when the company's layer has no unpublished changes
+(`ks_find_target` `unpublished_changes: false`), `ks_replay` on that layer
+without `release_organization_ids` shows it, and differences marked
+`catalog_changed` are the catalog's; otherwise say the result also includes
+the drafts.
+
+## 10. A company's own Overlay, and binding
+
+Only when the person asked, or said yes to your offer in section 1.
+
+1. `ks_create_layer` with `kind: organization`, `name`: the company's name,
+   `stable_id`: `org-<organization_id>`, and `parent_layer_stable_id`: the
+   layer the company runs now (its `layer` in `ks_find_target`). It starts
+   empty and runs for nobody. A new Manufacturer or Enterprise Overlay is the
+   same call with that `kind` and a parent of a kind it may stand on.
+2. `ks_bind_company` with the new layer and the company. It moves the
+   company off `previous_layer` at once. On a layer nothing has published the
+   result carries a `warning`: the company cannot quote, and its catalog
+   cannot be AI-tagged, until it is published. An empty Overlay published
+   reads exactly what the company read before, so publish it straight away —
+   or after the task's own change to it is saved — through the release plan
+   for that company (sections 7 and 8).
+3. Then write the company's change on its new Overlay (sections 2–6). An
+   import can go in before the publish; tagging waits for it (`ks_catalog_tag`
+   refuses with `layer_not_published` until then), so hand over the release
+   plan and tag once the person says it is published.
+
+Say in the summary which layer the company ran before and that it now runs
+the new one.
+
 ## Summary (always this shape)
 
 - **Environment:** ks-test
 - **Layers changed:** one line per layer: name (kind) — draft saved / preview
-  only; **not published**
+  only; **not published**; any layer created and any company bound, with the
+  layer it ran before
+- **Catalog:** imports (created / updated / unchanged, whose library) and
+  tagging runs (task id, what it wrote, how to undo); "none" otherwise
+- **Other people's drafts:** who saved what on each layer the release
+  publishes, from `draft_saves`
 - **Why:** each request line → what changed (or "not done" with the reason)
 - **Requirements:** each one marked done / needs confirmation / cannot be expressed now
 - **Publish impact:** what ships per layer (this task's / also ships), who

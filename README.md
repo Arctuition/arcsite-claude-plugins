@@ -98,12 +98,28 @@ A Rule at `review_required` does not stop an order: the order completes as
 "Ready with warnings". If someone must sign off before the order can go
 ahead, ask for a required Workflow task instead.
 
+Before it starts on a layer, the agent says who else has unpublished drafts
+on it and on the layers its release would publish, and when they saved them:
+those go out with your change.
+
+The agent can also work a company's Product catalog and give a company its
+own Overlay, each only when you ask:
+
+> Import this price list into Imperial Fence's catalog and AI-tag what is new.
+
+> Give Portland 004 its own Overlay and move it onto it.
+
+A catalog has no draft: an import or a tagging run is live at once. The agent
+previews the import first and tags a first few rows for you to check before
+the rest; a tagging run can be undone, an import cannot.
+
 ## Fewer approval prompts (optional)
 
 Claude Code asks before each tool call unless you allow it. To allow the
 read-only tools, add this to your `~/.claude/settings.json` (a plugin cannot
-ship permissions itself). `ks_apply` and `ks_replay` are deliberately left out
-so saving a draft and queueing Replay still ask.
+ship permissions itself). The tools that write — `ks_apply`, `ks_replay`,
+`ks_catalog_import_apply`, `ks_catalog_tag`, `ks_create_layer` and
+`ks_bind_company` — are deliberately left out so each still asks.
 
 ```json
 {
@@ -114,7 +130,9 @@ so saving a draft and queueing Replay still ask.
       "mcp__plugin_arcsite-ks-update_ks-test__ks_read_object",
       "mcp__plugin_arcsite-ks-update_ks-test__ks_preview",
       "mcp__plugin_arcsite-ks-update_ks-test__ks_replay_results",
-      "mcp__plugin_arcsite-ks-update_ks-test__ks_applies"
+      "mcp__plugin_arcsite-ks-update_ks-test__ks_applies",
+      "mcp__plugin_arcsite-ks-update_ks-test__ks_read_catalog",
+      "mcp__plugin_arcsite-ks-update_ks-test__ks_catalog_import_preview"
     ]
   }
 }

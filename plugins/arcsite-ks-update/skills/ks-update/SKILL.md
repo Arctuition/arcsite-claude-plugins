@@ -409,11 +409,15 @@ Only when the person asked, or said yes to your offer in section 1.
    same call with that `kind` and a parent of a kind it may stand on.
 2. `ks_bind_company` with the new layer and the company. It moves the
    company off `previous_layer` at once. On a layer nothing has published the
-   result carries a `warning`: the company cannot quote until it is
-   published. An empty Overlay published reads exactly what the company read
-   before, so publish it straight away — or after the task's own change to it
-   is saved — through the release plan for that company (sections 7 and 8).
-3. Then write the company's change on its new Overlay (sections 2–6).
+   result carries a `warning`: the company cannot quote, and its catalog
+   cannot be AI-tagged, until it is published. An empty Overlay published
+   reads exactly what the company read before, so publish it straight away —
+   or after the task's own change to it is saved — through the release plan
+   for that company (sections 7 and 8).
+3. Then write the company's change on its new Overlay (sections 2–6). An
+   import can go in before the publish; tagging waits for it (`ks_catalog_tag`
+   refuses with `layer_not_published` until then), so hand over the release
+   plan and tag once the person says it is published.
 
 Say in the summary which layer the company ran before and that it now runs
 the new one.

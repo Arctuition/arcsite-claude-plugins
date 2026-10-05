@@ -11,7 +11,7 @@
     {
       "name": "arcsite-ks-update",
       "source": "./plugins/arcsite-ks-update",
-      "description": "Update Knowledge Studio knowledge from Claude Code: find the layer, preview and save a draft, run Replay, and hand publishing back to the Console."
+      "description": "Update Knowledge Studio knowledge from Claude Code: find the layer, preview and save a draft, run Replay, and hand publishing back to the Console. Also imports and AI-tags Product catalogs and gives a company its own Overlay."
     }
   ]
 }

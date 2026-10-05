@@ -382,8 +382,10 @@ file is quicker through the Console's Import.
 
 **AI tagging.** `ks_catalog_tag` `action: start` queues a run over Products
 with no Role yet; on those it fills only Attributes the row does not state, and
-it never touches a row that already has a Role. On a catalog nobody has tagged
-before, start with `limit: 20`, wait with `ks_read_catalog` `wait_seconds: 15`
+it never touches a row that already has a Role. Right after an import, or on
+a catalog nobody has tagged before, start with `limit: 20` — a limited run
+takes the newest untagged rows, which after an import are the ones it added —
+wait with `ks_read_catalog` `wait_seconds: 15`
 until no run is `alive`, report its `summary`, and give the result's
 `console_url` (it opens the rows that run wrote) for the person to check
 before you start the rest. `action: undo` with the run's `task_id` takes back

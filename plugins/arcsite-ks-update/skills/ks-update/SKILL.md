@@ -10,11 +10,11 @@ person asking (usually CS) owns the business decisions and the release; you
 find the layer, read, write the patch, get it through preview, save the draft
 when asked, run Replay, and report.
 
-**Contract version: 5.** Every tool result carries `contract_version`. If it
-is higher than `5`, stop and tell the person to update the plugin (in a
+**Contract version: 6.** Every tool result carries `contract_version`. If it
+is higher than `6`, stop and tell the person to update the plugin (in a
 terminal, `claude plugin update arcsite-ks-update@arcsite`, then start a new
 session). If it is lower, the server has not been updated yet: stop and say
-so. This skill was written for version 5.
+so. This skill was written for version 6.
 
 Tools (full names in Claude Code: `mcp__plugin_arcsite-ks-update_ks-test__<tool>`):
 `ks_find_target`, `ks_read_layer`, `ks_read_object`, `ks_preview`, `ks_apply`,
@@ -193,10 +193,18 @@ Publishing stays in the Console.
   what happened since (`since`, where `restores_state_before_receipt: true`
   means it was undone). To write it back after an undo, ask the person first,
   then send `reapply_of` with the receipt's `id`.
-- **Undo**: `ks_applies` with the `apply_id` returns the undo document →
-  `ks_preview` → `ks_apply`. The list's `undo_current` says whether the undo
-  still fits the layer. If the layer moved since, the undo is refused as
-  drift; say the undo needs to be redone by hand.
+- **Undo**: the list's `undo.state` says whether each apply can still be
+  undone: `current` (its undo fits as it was handed out), `rebasable` (the
+  layer moved since, but none of the records that apply touched did),
+  `conflicts` (some of those records were written again since;
+  `undo.conflicts` names them), or `not_kept` (an apply from before its
+  records were kept, on a layer that has moved). `ks_applies` with the
+  `apply_id` returns `undo_document` → `ks_preview` → `ks_apply`; for a
+  `rebasable` apply it is already fitted to the layer as it stands and takes
+  back only that apply, leaving everything written after it. When
+  `undo_document` is null, name the records in `undo.conflicts` (or say the
+  apply is too old to tell) and say they need changing back by hand; never
+  take later work back with it.
 
 ## 7. Replay the release
 
@@ -262,8 +270,11 @@ includes drafts the release would not publish.
 `case_diff` lists only what moved. A case showing no difference on a
 component does not mean the case lacks it — after an undo or a revert, back to
 the baseline is the expected result. `catalog_changed: true` means both runs
-read the same knowledge and still answered differently: the Product catalog
-moved, not your patch — report that difference as the catalog's. A Slot that
+read the same knowledge and still answered differently, so the difference is
+not your patch: usually the Product catalog moved, but a deploy between the
+two runs does the same. Report it as not this task's and say it is one of
+those two; `catalog_changed: false` says nothing about where a difference
+came from. A Slot that
 went to `pending_facts` names what it waits on in `missing_facts`: check
 whether your patch touched those facts before saying the change is or is not
 yours. A case that failed with `answers_out_of_date` (or
@@ -395,8 +406,8 @@ Catalog changes are not drafts and are not in a release plan. To see their
 effect on real orders: when the company's layer has no unpublished changes
 (`ks_find_target` `unpublished_changes: false`), `ks_replay` on that layer
 without `release_organization_ids` shows it, and differences marked
-`catalog_changed` are the catalog's; otherwise say the result also includes
-the drafts.
+`catalog_changed` come from outside the knowledge — the catalog change, or a
+deploy since the baseline; otherwise say the result also includes the drafts.
 
 ## 10. A company's own Overlay, and binding
 

@@ -176,4 +176,16 @@ claude plugin validate --strict plugins/arcsite-ks-update
 
 When the server's tool contract version changes, release the skill written
 for it at the same time: the skill stops and asks people to update when the
-two disagree.
+two disagree. Any server change the skill's wording depends on bumps the
+contract, a new field included. In this order:
+
+1. Merge the cloudservice change and deploy it to test, migrations included.
+2. Confirm the number: any `ks-test` tool result carries `contract_version`.
+3. Merge the plugin pull request right after, and tell the people using the
+   plugin to update it.
+4. In a new session, check that the skill and the server agree.
+
+Between steps 2 and 4 everyone still on the older plugin is stopped and asked
+to update; that pause ends for each person when they install the new version
+and start a new session. Deploy outside the hours CS is working where you
+can: an agent mid-task meets the new server half-way.

@@ -107,19 +107,35 @@ own Overlay, each only when you ask:
 
 > Import this price list into Imperial Fence's catalog and AI-tag what is new.
 
+> Tag these 40 gate SKUs as single swing gates, 48 in, and set them to
+> requested only.
+
 > Give Portland 004 its own Overlay and move it onto it.
 
-A catalog has no draft: an import or a tagging run is live at once. The agent
-previews the import first and tags a first few rows for you to check before
-the rest; a tagging run can be undone, an import cannot.
+A catalog has no draft: an import, a tagging run or an edit is live at once.
+The agent previews an import first, tags a first few rows for you to check
+before the rest, and shows what an edit would change before writing it. A
+tagging run can be undone; an import or an edit cannot — a wrong edit is put
+right with another one.
+
+It can also tell you what a job comes to without the prototype, against the
+published knowledge or the drafts:
+
+> Resolve this Minneapolis job on the drafts: 4 runs of 40 ft, 7 end posts,
+> 2 single swing gates at 48 in. What does it buy?
+
+It reads the whole Enterprise library, as Replay does, so compare it with the
+prototype on All branches. To keep a job as a Replay case, save it in the
+prototype (Duplicate the job, change it, Save as test case).
 
 ## Fewer approval prompts (optional)
 
 Claude Code asks before each tool call unless you allow it. To allow the
 read-only tools, add this to your `~/.claude/settings.json` (a plugin cannot
 ship permissions itself). The tools that write — `ks_apply`, `ks_replay`,
-`ks_catalog_import_apply`, `ks_catalog_tag`, `ks_create_layer` and
-`ks_bind_company` — are deliberately left out so each still asks.
+`ks_catalog_import_apply`, `ks_catalog_tag`, `ks_catalog_edit`,
+`ks_create_layer` and `ks_bind_company` — are deliberately left out so each
+still asks.
 
 ```json
 {
@@ -130,6 +146,7 @@ ship permissions itself). The tools that write — `ks_apply`, `ks_replay`,
       "mcp__plugin_arcsite-ks-update_ks-test__ks_read_object",
       "mcp__plugin_arcsite-ks-update_ks-test__ks_preview",
       "mcp__plugin_arcsite-ks-update_ks-test__ks_replay_results",
+      "mcp__plugin_arcsite-ks-update_ks-test__ks_resolve",
       "mcp__plugin_arcsite-ks-update_ks-test__ks_applies",
       "mcp__plugin_arcsite-ks-update_ks-test__ks_read_catalog",
       "mcp__plugin_arcsite-ks-update_ks-test__ks_catalog_import_preview"

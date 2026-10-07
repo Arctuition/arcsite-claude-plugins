@@ -1,6 +1,6 @@
 ---
 name: ks-update
-description: Update ArcSite Knowledge Studio knowledge for a company, an enterprise or a manufacturer through the ks-test MCP tools — find the layer, read what is there, write and preview a minimal Interchange patch, save it as a draft when asked, run Replay, and hand publishing back to the Console with a release plan. Also imports and AI-tags a company's Product catalog, and creates a company's own Overlay and binds the company to it, when asked. Use when someone asks to change, check or explain a company's Knowledge Studio configuration (rules, defaults, questions, settings, preferences) or its Product catalog.
+description: Update ArcSite Knowledge Studio knowledge for a company, an enterprise or a manufacturer through the ks-test MCP tools — find the layer, read what is there, write and preview a minimal Interchange patch, save it as a draft when asked, run Replay, and hand publishing back to the Console with a release plan. Also resolves a job to see what it comes to, imports, AI-tags and directly edits a company's Product catalog, and creates a company's own Overlay and binds the company to it, when asked. Use when someone asks to change, check or explain a company's Knowledge Studio configuration (rules, defaults, questions, settings, preferences), what a job resolves to, or its Product catalog.
 ---
 
 # Knowledge Studio update
@@ -10,33 +10,35 @@ person asking (usually CS) owns the business decisions and the release; you
 find the layer, read, write the patch, get it through preview, save the draft
 when asked, run Replay, and report.
 
-**Contract version: 6.** Every tool result carries `contract_version`. If it
-is higher than `6`, stop and tell the person to update the plugin (in a
+**Contract version: 7.** Every tool result carries `contract_version`. If it
+is higher than `7`, stop and tell the person to update the plugin (in a
 terminal, `claude plugin update arcsite-ks-update@arcsite`, then start a new
 session). If it is lower, the server has not been updated yet: stop and say
-so. This skill was written for version 6.
+so. This skill was written for version 7.
 
 Tools (full names in Claude Code: `mcp__plugin_arcsite-ks-update_ks-test__<tool>`):
 `ks_find_target`, `ks_read_layer`, `ks_read_object`, `ks_preview`, `ks_apply`,
-`ks_replay`, `ks_replay_results`, `ks_applies`; for the Product catalog
-`ks_read_catalog`, `ks_catalog_import_preview`, `ks_catalog_import_apply`,
-`ks_catalog_tag`; for a company's own Overlay `ks_create_layer`,
+`ks_replay`, `ks_replay_results`, `ks_applies`; to see what a job comes to
+`ks_resolve`; for the Product catalog `ks_read_catalog`,
+`ks_catalog_import_preview`, `ks_catalog_import_apply`, `ks_catalog_tag`,
+`ks_catalog_edit`; for a company's own Overlay `ks_create_layer`,
 `ks_bind_company`.
 
 ## 0. Decide what kind of request this is
 
 - **Analyse only** ("check", "explain", "what would it take"): read and
   preview as needed; never call `ks_apply` or `ks_replay`. Reading earlier
-  Replay results with `ks_replay_results` is fine.
+  Replay results with `ks_replay_results` is fine, and so is resolving a job
+  with `ks_resolve` (section 11), which writes nothing.
 - **Change and save a draft**: the person explicitly asked to change and
   save (for example "update … and save the draft"). Only then may you apply,
   and then you do not ask again at each step (section 6).
 - **Publish**: never yours. Publishing happens in the Console. Give the
   release plan and the Console links (section 8).
-- **Catalog**: import Products or AI-tag them (section 9). A catalog has no
-  draft: an import or a tagging run is live for quoting at once. Run one only
-  when the person asked for that import or that tagging run; previews and
-  reads need no asking.
+- **Catalog**: import Products, AI-tag them, or edit their tags, Attributes
+  and selling terms directly (section 9). A catalog has no draft: an import,
+  a tagging run or an edit is live for quoting at once. Run one only when the
+  person asked for it; previews, dry runs and reads need no asking.
 - **New Overlay or binding** (section 10): only when the person asked for it,
   or said yes when you offered it.
 
@@ -79,9 +81,8 @@ Stop and ask when: there is more than one candidate (`selected` is null),
 the reach of the layer does not match the request, the request needs a new
 Overlay or a binding change it did not ask for, or one change that would have
 to be split across two layers (for example a Manufacturer change plus an
-Overlay change to cancel it for one company). Product tags and attributes one
-by one are the Console's catalog screen; whole-catalog imports and AI tagging
-are section 9.
+Overlay change to cancel it for one company). Product tags, attributes and
+selling terms, imports and AI tagging are section 9.
 
 **Other people's drafts.** Before you start, read `draft_saves` on the target
 and on each of its `publication_layers`: who saved that layer's draft since it
@@ -180,8 +181,11 @@ their work and yours publish together. Name them and when; carry on only if
 you already told the person about the same names in section 1 and nothing new
 is there, otherwise ask first. Two of your own sessions are not warned about
 — the checksums refuse an apply on a layer that moved. Call `ks_apply`
-with the same document and the preview's `context_checksum` and
-`diff_checksum`. An apply refused with `preview_out_of_date` means the layer
+with the preview's `context_checksum` and `diff_checksum` and **without the
+document**: an applicable preview (`kept_for_apply: true`) is kept for 24
+hours, and the apply uses that one. Send the document again only when the
+apply is refused with `preview_not_kept`. An apply refused with
+`preview_out_of_date` means the layer
 moved after the preview: preview again and check the result before
 re-applying. Then get the release plan and Replay the release (section 7).
 Publishing stays in the Console.
@@ -267,7 +271,9 @@ without `release_organization_ids` runs against every layer's draft; use it
 only when asked to check the drafts as they stand, and then say its result
 includes drafts the release would not publish.
 
-`case_diff` lists only what moved. A case showing no difference on a
+`case_diff` lists only what moved. Components that changed the same way
+are one row naming all their `instance_ids` (fourteen gates that lost the same
+latch are one row). A case showing no difference on a
 component does not mean the case lacks it — after an undo or a revert, back to
 the baseline is the expected result. `catalog_changed: true` means both runs
 read the same knowledge and still answered differently, so the difference is
@@ -291,9 +297,10 @@ Rules raise (name, severity, explanation). `case_diff` lists those under
 check, so its form was not compared — the next run re-baselines it. A change
 that moves none of these — a Workflow task — leaves every case unchanged, and
 so does a Rule whose condition no saved order meets. Mark that request line
-**not verified by Replay**, and say what would confirm it: resolve a job in the
-prototype where the Rule's condition holds (or the task applies), and check
-the warnings or tasks the job shows.
+**not verified by Replay**, and say what would confirm it: a job where the
+Rule's condition holds (or the task applies). You can run that yourself with
+`ks_resolve` `layers: drafts` (section 11) and check its `warnings`; say
+which job you ran.
 
 ## 8. Hand over: what publishing will do
 
@@ -391,6 +398,27 @@ one with `updated` above 0. More than about 3,000 rows: send parts, each with
 the header, preview and apply each; each part is all or nothing. A very large
 file is quicker through the Console's Import.
 
+**Direct edits.** `ks_catalog_edit` writes what the Console's catalog screen
+writes, for many rows in one call: a list of `edits`, each naming rows by
+`skus` (or `product_ids` for a row with no SKU) and any of `role` with `tag`
+true/false, `attributes` (Attribute stable_id → values in the vocabulary's
+words; `[]` takes a statement back), and `selling` (`preset`, `unit`,
+`amount`, `rounding`, `extra`). Stating a value needs the `role` it is
+stated under, and only that Role's Attributes are accepted — read them first
+if you are unsure. Clearing one (`[]`) needs no `role`, so a value left behind
+by an Attribute nobody declares any more can still be taken off. The Role's selection policy (for example requested only) is one of
+its Attributes: state it like any other. Always call it first as it defaults,
+`dry_run: true`, and report `products_changed` and each entry of `changes`
+(`before` → `after`, the `products` it covers and `product_count`). Write with
+`dry_run: false`, the same edits, only when the person asked for those
+changes; the answer reads every changed row back. One edit that cannot be
+made (a SKU not in the catalog, a Role or Attribute the company's knowledge
+does not declare, a value outside the vocabulary) refuses the whole batch:
+`errors` names each by `edits[N]`. There is no undo: a wrong edit is put right
+by another edit, so say so before writing one that changes rows people tagged
+by hand. Like an import, it lands in the Enterprise's library when the company
+shares one.
+
 **AI tagging.** `ks_catalog_tag` `action: start` queues a run over Products
 with no Role yet; on those it fills only Attributes the row does not state, and
 it never touches a row that already has a Role. Right after an import, or on
@@ -433,14 +461,45 @@ Only when the person asked, or said yes to your offer in section 1.
 Say in the summary which layer the company ran before and that it now runs
 the new one.
 
+## 11. What a job comes to
+
+`ks_resolve` runs one job for a company and returns what it would buy, with
+nothing saved: `organization_id`, `trade` (the Trade layer, such as `fence`),
+`context` (what picks the questionnaire, such as the material system),
+`answers` and `instances` — one entry per thing on the drawing, each with
+its `role` and its own `inputs` (a run's length, a gate's opening and type).
+Seven end posts are seven entries; there is no count. Give each its own
+`instance_id` (`post-1` … `post-7`) or leave them all out; two under one id
+are refused. Keys are the Fact and
+Attribute stable_ids the job is asked in, so start from a real order: read a
+saved case with `ks_replay_results` `action: case_inputs` and change only what
+differs. `layers: drafts` reads every layer's current draft, other people's
+included (say so); the default reads what is published.
+
+It reads the whole Enterprise library ranked the way the engine ranks it —
+the same run a Replay case of the job makes — never one branch's shelf or
+stock, so compare it with the prototype on All branches. The result has
+`skus` (demand and order quantity with units, the by-SKU table), and per
+instance its `components` (status, quantity, the `sku` and `name` it defaults
+to, `missing_facts` while `pending_facts`), `warnings` and `required_missing`;
+instances that came out the same are one entry listing their `instance_ids`.
+A refusal that answers were taken away lists them in `data`. Each call takes
+as long as a resolve in the prototype, often 20 seconds or more: run the jobs
+you need, not variations for their own sake.
+
+Saving a job as a Replay case is not yours: a person does it in the prototype
+(Duplicate the job, change it, Save as test case). Say which job is worth
+keeping and why.
+
 ## Summary (always this shape)
 
 - **Environment:** ks-test
 - **Layers changed:** one line per layer: name (kind) — draft saved / preview
   only; **not published**; any layer created and any company bound, with the
   layer it ran before
-- **Catalog:** imports (created / updated / unchanged, whose library) and
-  tagging runs (task id, what it wrote, how to undo); "none" otherwise
+- **Catalog:** imports (created / updated / unchanged, whose library),
+  tagging runs (task id, what it wrote, how to undo) and direct edits (rows
+  changed, before → after, no undo); "none" otherwise
 - **Other people's drafts:** who saved what on each layer the release
   publishes, from `draft_saves`
 - **Why:** each request line → what changed (or "not done" with the reason)

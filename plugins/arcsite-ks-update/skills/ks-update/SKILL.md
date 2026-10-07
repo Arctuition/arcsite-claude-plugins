@@ -403,9 +403,10 @@ writes, for many rows in one call: a list of `edits`, each naming rows by
 `skus` (or `product_ids` for a row with no SKU) and any of `role` with `tag`
 true/false, `attributes` (Attribute stable_id → values in the vocabulary's
 words; `[]` takes a statement back), and `selling` (`preset`, `unit`,
-`amount`, `rounding`, `extra`). Attributes need the `role` they are stated
-under, and only that Role's Attributes are accepted — read them first if you
-are unsure. The Role's selection policy (for example requested only) is one of
+`amount`, `rounding`, `extra`). Stating a value needs the `role` it is
+stated under, and only that Role's Attributes are accepted — read them first
+if you are unsure. Clearing one (`[]`) needs no `role`, so a value left behind
+by an Attribute nobody declares any more can still be taken off. The Role's selection policy (for example requested only) is one of
 its Attributes: state it like any other. Always call it first as it defaults,
 `dry_run: true`, and report `products_changed` and each entry of `changes`
 (`before` → `after`, the `products` it covers and `product_count`). Write with
@@ -467,7 +468,9 @@ nothing saved: `organization_id`, `trade` (the Trade layer, such as `fence`),
 `context` (what picks the questionnaire, such as the material system),
 `answers` and `instances` — one entry per thing on the drawing, each with
 its `role` and its own `inputs` (a run's length, a gate's opening and type).
-Seven end posts are seven entries; there is no count. Keys are the Fact and
+Seven end posts are seven entries; there is no count. Give each its own
+`instance_id` (`post-1` … `post-7`) or leave them all out; two under one id
+are refused. Keys are the Fact and
 Attribute stable_ids the job is asked in, so start from a real order: read a
 saved case with `ks_replay_results` `action: case_inputs` and change only what
 differs. `layers: drafts` reads every layer's current draft, other people's

@@ -10,11 +10,11 @@ person asking (usually CS) owns the business decisions and the release; you
 find the layer, read, write the patch, get it through preview, save the draft
 when asked, run Replay, and report.
 
-**Contract version: 7.** Every tool result carries `contract_version`. If it
-is higher than `7`, stop and tell the person to update the plugin (in a
+**Contract version: 8.** Every tool result carries `contract_version`. If it
+is higher than `8`, stop and tell the person to update the plugin (in a
 terminal, `claude plugin update arcsite-ks-update@arcsite`, then start a new
 session). If it is lower, the server has not been updated yet: stop and say
-so. This skill was written for version 7.
+so. This skill was written for version 8.
 
 Tools (full names in Claude Code: `mcp__plugin_arcsite-ks-update_ks-test__<tool>`):
 `ks_find_target`, `ks_read_layer`, `ks_read_object`, `ks_preview`, `ks_apply`,
@@ -380,7 +380,10 @@ A company's catalog is addressed by the company (`organization_id` from
 `shares_enterprise_library: true` means the company reads its Enterprise's
 library, so an import or a tag lands there, for every company on it; say so —
 how many Products there are, how many have no Role yet (`untagged`), counts by
-Role, and the latest tagging runs.
+Role, and the latest tagging runs. To find rows, give it `search` (part of a SKU
+or name) and/or `role`: it lists matching rows 50 a page (`page`), each with
+its Roles, stated Attributes and selling terms. Use it to find the SKUs an
+edit should name, rather than guessing them.
 
 **Import.** The person gives a file. Turn its first sheet into CSV text with a
 header row naming `Name` and any of `ArcSite ID`, `SKU`, `Description`
@@ -408,8 +411,10 @@ stated under, and only that Role's Attributes are accepted — read them first
 if you are unsure. Clearing one (`[]`) needs no `role`, so a value left behind
 by an Attribute nobody declares any more can still be taken off. The Role's selection policy (for example requested only) is one of
 its Attributes: state it like any other. Always call it first as it defaults,
-`dry_run: true`, and report `products_changed` and each entry of `changes`
-(`before` → `after`, the `products` it covers and `product_count`). Write with
+`dry_run: true`. The answer gives each edit's counts and `changed_skus`;
+check the counts are what you meant. Add `detail: true` only for a small batch
+whose values you need to show (each entry of `changes`, `before` → `after`):
+for a large one it is too big for a tool result. Write with
 `dry_run: false`, the same edits, only when the person asked for those
 changes; the answer reads every changed row back. One edit that cannot be
 made (a SKU not in the catalog, a Role or Attribute the company's knowledge

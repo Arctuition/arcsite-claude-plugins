@@ -77,7 +77,8 @@ Ask in plain words, naming the company or layer and what to change:
 > against the earlier orders.
 
 Say "save the draft" when you want the change written; otherwise the agent
-only analyses and previews. The agent never publishes. It ends with what
+only analyses and previews. Before saving, it can try the previewed change on
+real jobs without writing anything, and show you what each would buy. The agent never publishes. It ends with what
 publishing will do — what each layer ships (anyone else's unpublished edits
 included), which companies move and which do not, and Replay of real orders
 against the stack the release leaves in force, with the version of every
@@ -159,7 +160,8 @@ still asks.
 
 | You see | Do |
 | --- | --- |
-| The agent says the contract version does not match | Update the plugin: `/plugin` → **Installed** → `arcsite-ks-update` → **Update now**, or `claude plugin update arcsite-ks-update@arcsite` in a shell. Then restart Claude Code |
+| The agent says the plugin is too old | Update the plugin: `/plugin` → **Installed** → `arcsite-ks-update` → **Update now**, or `claude plugin update arcsite-ks-update@arcsite` in a shell. Then restart Claude Code |
+| The agent says the server has not been updated yet | The plugin is newer than ks-test. Wait for the deploy, or ask whoever released it |
 | Tools fail with 401 / "not authenticated", or ks-test shows as needing sign-in | Connect ks-test again: the ks-test connector in the desktop app, or `/mcp` → `plugin:arcsite-ks-update:ks-test` → **Authenticate** in a terminal |
 | "This account cannot connect" on the sign-in page | Ask an Admin Console administrator for the Knowledge Studio authoring role |
 
@@ -191,18 +193,34 @@ claude plugin validate --strict .
 claude plugin validate --strict plugins/arcsite-ks-update
 ```
 
-When the server's tool contract version changes, release the skill written
-for it at the same time: the skill stops and asks people to update when the
-two disagree. Any server change the skill's wording depends on bumps the
-contract, a new field included. In this order:
+The server answers with two numbers: `contract_version`, what it offers, and
+`min_skill_contract`, the oldest skill that still reads it correctly. The skill
+names the one version it was written for and stops when it is older than
+`min_skill_contract` (the person updates the plugin) or newer than
+`contract_version` (the server is not deployed yet). Any server change a
+skill's wording could depend on bumps `contract_version`, a new field included.
+Only a change that would make an older skill do the wrong thing -- a field it
+relies on changed meaning or went away, a refusal it does not expect -- raises
+`min_skill_contract`; an addition leaves it alone, so nobody on the older
+plugin is stopped.
+
+Both numbers are readable without signing in:
+
+```
+curl -s https://admin-test.arcsite.com/manage/ks-mcp/contract
+```
+
+A pull request that sets the skill's contract higher than ks-test's fails the
+`contract` check, so a plugin cannot be merged ahead of the server it needs.
+
+In this order:
 
 1. Merge the cloudservice change and deploy it to test, migrations included.
-2. Confirm the number: any `ks-test` tool result carries `contract_version`.
-3. Merge the plugin pull request right after, and tell the people using the
-   plugin to update it.
+2. Confirm the numbers at the address above.
+3. Re-run the pull request's `contract` check, merge it, and tell the people
+   using the plugin to update.
 4. In a new session, check that the skill and the server agree.
 
-Between steps 2 and 4 everyone still on the older plugin is stopped and asked
-to update; that pause ends for each person when they install the new version
-and start a new session. Deploy outside the hours CS is working where you
-can: an agent mid-task meets the new server half-way.
+When `min_skill_contract` rose, everyone still on an older plugin is stopped
+and asked to update between steps 2 and 4. Deploy outside the hours CS is
+working where you can: an agent mid-task meets the new server half-way.

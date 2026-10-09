@@ -10,11 +10,11 @@ person asking (usually CS) owns the business decisions and the release; you
 find the layer, read, write the patch, get it through preview, save the draft
 when asked, run Replay, and report.
 
-**Contract version: 10.** Every tool result carries `contract_version`. If it
-is higher than `10`, stop and tell the person to update the plugin (in a
+**Contract version: 11.** Every tool result carries `contract_version`. If it
+is higher than `11`, stop and tell the person to update the plugin (in a
 terminal, `claude plugin update arcsite-ks-update@arcsite`, then start a new
 session). If it is lower, the server has not been updated yet: stop and say
-so. This skill was written for version 10.
+so. This skill was written for version 11.
 
 Tools (full names in Claude Code: `mcp__plugin_arcsite-ks-update_ks-test__<tool>`):
 `ks_find_target`, `ks_read_layer`, `ks_read_object`, `ks_preview`, `ks_apply`,
@@ -391,8 +391,13 @@ the catalog is described in, read from the company's knowledge with its drafts:
 which of them are `required`) and `attributes` (each once: `value_type`,
 `unit`, `cardinality`, `allowed_values` with labels — null means an open
 vocabulary, any value — and `extensible_below`: whether a layer below the
-Trade may add values of its own). Read it once instead of reading Attributes
-one by one with `ks_read_object`. It leaves out what only the job answers
+Trade may add values of its own). It comes 15 Roles a page, each page with
+the Attributes its own Roles state: `vocabulary.pages` says how many, and
+`vocabulary_page` asks for the next. `vocabulary_search` keeps only the Roles
+whose stable_id or name contains it — a material system such as `chain_link`
+or `vinyl` — so read the families the work is about, every page of them,
+instead of reading Attributes one by one with `ks_read_object`. An Attribute
+two pages both use appears on both. It leaves out what only the job answers
 (questions about the fence being built); those are in the Questionnaire.
 
 **Import.** The person gives a file. Turn its first sheet into CSV text with a
@@ -532,8 +537,9 @@ When the person brings a manufacturer's material and wants it set up.
 4. **Create and bind first** (section 10): the Manufacturer layer on the
    Trade, then the company bound to it. Both are free now: the layer starts
    with an empty `0.0.0`, so the company quotes on what the Trade alone says.
-5. **Read the vocabulary once**: `ks_read_catalog` with `vocabulary: true`
-   for that company (section 9).
+5. **Read the vocabulary**: `ks_read_catalog` with `vocabulary: true` for
+   that company, `vocabulary_search` set to each material system the sources
+   cover, every page of each (section 9).
 6. **Classify every value the sources state**, Attribute by Attribute:
    - in `allowed_values`, or the Attribute is open (`allowed_values: null`) →
      use the vocabulary's word when you import and tag;

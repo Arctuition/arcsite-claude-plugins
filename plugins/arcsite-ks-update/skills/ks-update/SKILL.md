@@ -10,11 +10,11 @@ person asking (usually CS) owns the business decisions and the release; you
 find the layer, read, write the patch, get it through preview, save the draft
 when asked, run Replay, and report.
 
-**Contract version: 8.** Every tool result carries `contract_version`. If it
-is higher than `8`, stop and tell the person to update the plugin (in a
+**Contract version: 9.** Every tool result carries `contract_version`. If it
+is higher than `9`, stop and tell the person to update the plugin (in a
 terminal, `claude plugin update arcsite-ks-update@arcsite`, then start a new
 session). If it is lower, the server has not been updated yet: stop and say
-so. This skill was written for version 8.
+so. This skill was written for version 9.
 
 Tools (full names in Claude Code: `mcp__plugin_arcsite-ks-update_ks-test__<tool>`):
 `ks_find_target`, `ks_read_layer`, `ks_read_object`, `ks_preview`, `ks_apply`,
@@ -448,20 +448,24 @@ Only when the person asked, or said yes to your offer in section 1.
 
 1. `ks_create_layer` with `kind: organization`, `name`: the company's name,
    `stable_id`: `org-<organization_id>`, and `parent_layer_stable_id`: the
-   layer the company runs now (its `layer` in `ks_find_target`). It starts
-   empty and runs for nobody. A new Manufacturer or Enterprise Overlay is the
-   same call with that `kind` and a parent of a kind it may stand on.
+   layer the company runs now (its `layer` in `ks_find_target`). It is created
+   with an empty version `0.0.0` already published (`active_version`), so it
+   reads exactly what its parent reads, and it runs for nobody until a company
+   is bound to it. A new Manufacturer or Enterprise Overlay is the same call
+   with that `kind` and a parent of a kind it may stand on. A parent that has
+   never published is refused: its publishing goes to the Console first.
 2. `ks_bind_company` with the new layer and the company. It moves the
-   company off `previous_layer` at once. On a layer nothing has published the
-   result carries a `warning`: the company cannot quote, and its catalog
-   cannot be AI-tagged, until it is published. An empty Overlay published
-   reads exactly what the company read before, so publish it straight away —
-   or after the task's own change to it is saved — through the release plan
-   for that company (sections 7 and 8).
-3. Then write the company's change on its new Overlay (sections 2–6). An
-   import can go in before the publish; tagging waits for it (`ks_catalog_tag`
-   refuses with `layer_not_published` until then), so hand over the release
-   plan and tag once the person says it is published.
+   company off `previous_layer` at once, and the company quotes on the new
+   layer straight away; on an Organization Overlay made on the layer it ran,
+   exactly as before. Do not publish it first. Only a layer made before layers
+   were created this way can come back with a `warning`: the company cannot
+   quote, and its catalog cannot be AI-tagged, until that layer is published,
+   so hand over its release plan (sections 7 and 8).
+3. Then write the company's change on its new layer (sections 2–6). Importing
+   and AI-tagging its catalog (Roles and Attributes saved only in the draft
+   included), `ks_resolve` with `layers: drafts` and Replay all work before
+   anything more is published; the change reaches quotes when the person
+   publishes it in the Console (by default the first publish is `0.0.1`).
 
 Say in the summary which layer the company ran before and that it now runs
 the new one.

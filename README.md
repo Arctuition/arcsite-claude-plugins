@@ -225,9 +225,11 @@ cd plugins/arcsite-ks-update
 claude plugin eval . --trust-plugin --ablation none --runs 1 --judge-model sonnet --max-cost-usd 10
 ```
 
-A case that drops below 1.00 is a behaviour the skill no longer has. When the
-tools change shape, refresh `evals/mocks/ks-test/_tools.json` from the server's
-`tools/list` and the fixtures from real read-only calls.
+A case that drops below 1.00 is a behaviour the skill no longer has. The cases
+and their mocks are written by `scripts/generate_evals.py` (run it from the
+repository root and review the diff); change them there, not by hand. Its
+docstring says how to refresh the recorded answers and
+`evals/mocks/ks-test/_tools.json` when the tools change shape.
 
 In this order:
 

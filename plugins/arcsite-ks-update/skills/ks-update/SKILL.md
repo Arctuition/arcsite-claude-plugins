@@ -556,10 +556,20 @@ When the person brings a manufacturer's material and wants it set up.
    owner (each closed value or missing Role, with the source value, the SKUs it
    affects and the file it came from) and for the manufacturer (each unclear
    value, with the same). Put both in the summary.
-8. Then the usual steps: the layer's patch (sections 2–6), the catalog import
-   and a first AI-tagging run of 20 (section 9), one real job through
-   `ks_resolve` with `layers: drafts` (section 11), test cases saved by a
-   person in the prototype, and Replay (section 7). Publishing stays the
+8. **Selling terms come from the price book too.** An import carries only
+   name, SKU and description; the sheet's sell unit ("50 ft roll", "bag of
+   100", "21 ft stick", "500 ft coil") becomes the row's selling terms after
+   the import, with `ks_catalog_edit` `selling` (section 9): `preset:
+   packages`, the package as `unit`, and as `amount` how much of the Role's
+   `demand_unit` one package holds (a 50 ft roll of fabric demanded in ft is
+   `amount: "50"`; a bag of 100 ties demanded each is `amount: "100"`). Set
+   them before `ks_resolve`: a row without them is ordered one package per
+   unit of demand, so 159 ties come out as 159 bags. A sell unit that does
+   not say how much it holds goes on the manufacturer's list.
+9. Then the usual steps: the layer's patch (sections 2–6), the catalog import,
+   its selling terms and a first AI-tagging run of 20 (section 9), one real job
+   through `ks_resolve` with `layers: drafts` (section 11), test cases saved by
+   a person in the prototype, and Replay (section 7). Publishing stays the
    person's, in the Console (section 8).
 
 ## Summary (always this shape)

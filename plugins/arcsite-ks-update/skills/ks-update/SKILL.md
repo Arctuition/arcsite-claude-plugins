@@ -10,11 +10,11 @@ person asking (usually CS) owns the business decisions and the release; you
 find the layer, read, write the patch, get it through preview, save the draft
 when asked, run Replay, and report.
 
-**Contract version: 9.** Every tool result carries `contract_version`. If it
-is higher than `9`, stop and tell the person to update the plugin (in a
+**Contract version: 10.** Every tool result carries `contract_version`. If it
+is higher than `10`, stop and tell the person to update the plugin (in a
 terminal, `claude plugin update arcsite-ks-update@arcsite`, then start a new
 session). If it is lower, the server has not been updated yet: stop and say
-so. This skill was written for version 9.
+so. This skill was written for version 10.
 
 Tools (full names in Claude Code: `mcp__plugin_arcsite-ks-update_ks-test__<tool>`):
 `ks_find_target`, `ks_read_layer`, `ks_read_object`, `ks_preview`, `ks_apply`,
@@ -41,6 +41,8 @@ Tools (full names in Claude Code: `mcp__plugin_arcsite-ks-update_ks-test__<tool>
   person asked for it; previews, dry runs and reads need no asking.
 - **New Overlay or binding** (section 10): only when the person asked for it,
   or said yes when you offered it.
+- **A new manufacturer from its sources** (section 12): price lists, spec
+  sheets and drawings turned into a Manufacturer layer and a catalog.
 
 The environment is the one the tools report in `environment` (`ks-test` in
 this release). Keep it for the whole task, name it in your summary, and never
@@ -383,7 +385,15 @@ how many Products there are, how many have no Role yet (`untagged`), counts by
 Role, and the latest tagging runs. To find rows, give it `search` (part of a SKU
 or name) and/or `role`: it lists matching rows 50 a page (`page`), each with
 its Roles, stated Attributes and selling terms. Use it to find the SKUs an
-edit should name, rather than guessing them.
+edit should name, rather than guessing them. `vocabulary: true` adds the words
+the catalog is described in, read from the company's knowledge with its drafts:
+`roles` (each Role with the `attributes` a Product bought as it states and
+which of them are `required`) and `attributes` (each once: `value_type`,
+`unit`, `cardinality`, `allowed_values` with labels — null means an open
+vocabulary, any value — and `extensible_below`: whether a layer below the
+Trade may add values of its own). Read it once instead of reading Attributes
+one by one with `ks_read_object`. It leaves out what only the job answers
+(questions about the fence being built); those are in the Questionnaire.
 
 **Import.** The person gives a file. Turn its first sheet into CSV text with a
 header row naming `Name` and any of `ArcSite ID`, `SKU`, `Description`
@@ -500,12 +510,60 @@ Saving a job as a Replay case is not yours: a person does it in the prototype
 (Duplicate the job, change it, Save as test case). Say which job is worth
 keeping and why.
 
+## 12. A new manufacturer from its sources
+
+When the person brings a manufacturer's material and wants it set up.
+
+1. **Ask first**, before reading anything: which manufacturer, which Trade
+   (for example `fence`), and whether it is a new layer or one that exists
+   (`ks_find_target` its name). Ask which company quotes on it. A company or a
+   user account that does not exist yet is not yours to create: the person
+   makes it in the admin, then you go on.
+2. **Sources.** Ask for a SKU export or price book (a spreadsheet) before
+   anything else; it is where SKUs and values are reliable. Spec sheets and
+   drawings come second. Warranty, care and installation documents state no
+   values: skip them and say which files you skipped. A manufacturer with many
+   brands or product lines: agree with the person which ones to do first, and
+   do them one batch at a time.
+3. **Numbers from PDFs.** Text taken from a drawing often loses fraction bars:
+   "3 5/16" comes out as "31316". A number that does not fit its Attribute's
+   unit or the sizes around it is to be shown to the person and confirmed;
+   never correct it yourself.
+4. **Create and bind first** (section 10): the Manufacturer layer on the
+   Trade, then the company bound to it. Both are free now: the layer starts
+   with an empty `0.0.0`, so the company quotes on what the Trade alone says.
+5. **Read the vocabulary once**: `ks_read_catalog` with `vocabulary: true`
+   for that company (section 9).
+6. **Classify every value the sources state**, Attribute by Attribute:
+   - in `allowed_values`, or the Attribute is open (`allowed_values: null`) →
+     use the vocabulary's word when you import and tag;
+   - not in it, `extensible_below: true` → the Manufacturer layer can add it:
+     an `attribute_domain_extension` in this layer's patch (sections 2–6; read
+     its `part: schema` first);
+   - not in it, `extensible_below: false` → this layer cannot state it. It
+     goes on the **Trade owner's list**;
+   - a product with no Role it could be bought as → also the Trade owner's
+     list;
+   - a value the sources leave unclear or contradict → the
+     **manufacturer's list**.
+7. **Write two question lists** from that, never from memory: for the Trade
+   owner (each closed value or missing Role, with the source value, the SKUs it
+   affects and the file it came from) and for the manufacturer (each unclear
+   value, with the same). Put both in the summary.
+8. Then the usual steps: the layer's patch (sections 2–6), the catalog import
+   and a first AI-tagging run of 20 (section 9), one real job through
+   `ks_resolve` with `layers: drafts` (section 11), test cases saved by a
+   person in the prototype, and Replay (section 7). Publishing stays the
+   person's, in the Console (section 8).
+
 ## Summary (always this shape)
 
 - **Environment:** ks-test
 - **Layers changed:** one line per layer: name (kind) — draft saved / preview
   only; **not published**; any layer created and any company bound, with the
   layer it ran before
+- **Sources** (section 12 only): files used and files skipped, and the two
+  question lists — the Trade owner's and the manufacturer's
 - **Catalog:** imports (created / updated / unchanged, whose library),
   tagging runs (task id, what it wrote, how to undo) and direct edits (rows
   changed, before → after, no undo); "none" otherwise

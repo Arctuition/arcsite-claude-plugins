@@ -1,0 +1,32 @@
+name: contract
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: The skill does not need a newer server than ks-test runs
+        run: |
+          skill=$(grep -oE 'this skill is version [0-9]+' plugins/arcsite-ks-update/skills/ks-update/SKILL.md | grep -oE '[0-9]+$')
+          if [ -z "$skill" ]; then
+            echo "SKILL.md does not name its contract version"; exit 1
+          fi
+          server=$(curl -fsS https://admin-test.arcsite.com/manage/ks-mcp/contract | python3 -c 'import json,sys; print(json.load(sys.stdin)["contract_version"])')
+          echo "skill $skill, ks-test $server"
+          if [ "$skill" -gt "$server" ]; then
+            echo "The skill is written for contract $skill but ks-test runs $server: deploy the server first, then re-run this check."
+            exit 1
+          fi
+      - name: Plugin manifests validate
+        run: |
+          if npm install -g @anthropic-ai/claude-code >/dev/null 2>&1; then
+            claude plugin validate --strict .
+            claude plugin validate --strict plugins/arcsite-ks-update
+          else
+            echo "Claude Code could not be installed here; skipping validation"
+          fi

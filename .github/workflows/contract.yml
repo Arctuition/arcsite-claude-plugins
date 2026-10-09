@@ -16,7 +16,11 @@ jobs:
           if [ -z "$skill" ]; then
             echo "SKILL.md does not name its contract version"; exit 1
           fi
-          server=$(curl -fsS https://admin-test.arcsite.com/manage/ks-mcp/contract | python3 -c 'import json,sys; print(json.load(sys.stdin)["contract_version"])')
+          if ! answer=$(curl -fsS https://admin-test.arcsite.com/manage/ks-mcp/contract); then
+            echo "ks-test does not serve its contract yet (the endpoint arrived with contract 12): deploy the server first, then re-run this check."
+            exit 1
+          fi
+          server=$(printf '%s' "$answer" | python3 -c 'import json,sys; print(json.load(sys.stdin)["contract_version"])')
           echo "skill $skill, ks-test $server"
           if [ "$skill" -gt "$server" ]; then
             echo "The skill is written for contract $skill but ks-test runs $server: deploy the server first, then re-run this check."

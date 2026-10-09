@@ -1,6 +1,6 @@
 {
   "name": "arcsite-ks-update",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "description": "Update Knowledge Studio knowledge from Claude Code: find the layer, preview and save a draft, run Replay, and hand publishing back to the Console. Also resolves jobs, imports, AI-tags and edits Product catalogs, and gives a company its own Overlay.",
   "author": {
     "name": "ArcSite"

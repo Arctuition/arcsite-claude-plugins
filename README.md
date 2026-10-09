@@ -213,6 +213,22 @@ curl -s https://admin-test.arcsite.com/manage/ks-mcp/contract
 A pull request that sets the skill's contract higher than ks-test's fails the
 `contract` check, so a plugin cannot be merged ahead of the server it needs.
 
+Before merging a change to the skill, run its eval suite. Each case is a real
+request run by a headless Claude Code against recorded ks-test answers (each
+case's `mocks/`; nothing reaches a server), graded on which tools it called and
+what it said. The two cases that apply a change answer the reads an apply
+changes from one agent playing the server, so run with a Sonnet judge, which
+follows it reliably. One run of every case costs about $2.50:
+
+```
+cd plugins/arcsite-ks-update
+claude plugin eval . --trust-plugin --ablation none --runs 1 --judge-model sonnet --max-cost-usd 10
+```
+
+A case that drops below 1.00 is a behaviour the skill no longer has. When the
+tools change shape, refresh `evals/mocks/ks-test/_tools.json` from the server's
+`tools/list` and the fixtures from real read-only calls.
+
 In this order:
 
 1. Merge the cloudservice change and deploy it to test, migrations included.

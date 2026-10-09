@@ -1,0 +1,8 @@
+---
+expect:
+  layer_stable_id: org-287386500977433776
+  context_checksum: "f1f9ee329769886633f32d150c244dbb9e55c8510fd525ae6619deca14a5afbc"
+  diff_checksum: "86fdfc06c731411a540a9f0ee7e90c912626db5a0061aa69264610ea859d54f0"
+---
+
+{"environment":"ks-test","contract_version":"13","min_skill_contract":"13","applied":true,"apply_id":15,"reapply_of":null,"changes":{"objects":{"added":0,"changed":0,"removed":0},"delegated_settings":{"added":0,"changed":0,"removed":0},"layer_settings":{"added":0,"changed":1,"removed":0}},"publishable":true,"baseline":{"authoring_checksum":"3b1e0c57a0f4d6e2b9a8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6","ancestors":[{"layer":"arcsite-core","version":"0.0.1","checksum":"b0fedf0dbaabb52f6987babbc90e27374cc503b21cb505b52a7af3411fbb0c7f"},{"layer":"construction-core","version":"0.0.1","checksum":"7e1e6c3419e0e793b30a900a195a6c0c5278f17afac979cdd0d9b2f870205847"},{"layer":"fence","version":"0.0.27","checksum":"134efca57f1f524084ed137df77ca1e182cdc429cbec0c0918ae30caa2e46872"},{"layer":"master-halco","version":"0.0.45","checksum":"d002acb6caa2a0a7d469826d933afc18d9df8248e0aaf95a6869a73774453a89"},{"layer":"master-halco-distribution","version":"0.0.46","checksum":"94d1ae9d300c3f2d6f7fd022d8915f81414e7b373f113abfa5d03d8577e9f099"}]},"notes":[],"touched":{"declared":1,"missing":0},"undo":"ks_applies with this apply_id returns the undo document","console_url":"https://admin-test.arcsite.com/knowledge-studio?layer=org-287386500977433776&module=versions","recent_applies_url":"https://admin-test.arcsite.com/knowledge-studio?layer=org-287386500977433776&module=agent","published":false}

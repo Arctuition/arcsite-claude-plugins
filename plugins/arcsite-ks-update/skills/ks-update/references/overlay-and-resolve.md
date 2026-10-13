@@ -47,6 +47,29 @@ saved case with `ks_replay_results` `action: case_inputs` and change only what
 differs. `layers: drafts` reads every layer's current draft, other people's
 included (say so); the default reads what is published.
 
+**A job you write yourself** (from a description, a quote or a drawing, with
+no saved case to copy) answers every Question the form asks it, not only the
+required ones. The prototype opens each Question at its default and sends it;
+`ks_resolve` takes only what you give it, and a Question left out is
+unanswered, not defaulted: the knowledge that reads it does not apply, and
+nothing in the result says so. A vinyl job of prebuilt panels sent without
+its panel model is matched to posts of any model, every part still
+`resolved`. So before the first run:
+
+1. Read the questionnaire the context selects (`ks_read_layer` `part:
+   objects`, `kind: questionnaire`, on the company's layer; the one whose
+   `applies_when` the context meets), and in one `ks_read_object` call with
+   `records`, the `question_default_override` of each of its Questions'
+   attributes (a layer above the company may pre-select another value).
+2. For each Question whose `ask_when` holds on the answers so far, send the
+   person's answer; else its default: a `defaults` entry whose `when` holds
+   (the questionnaire's and every override's count), else an override's
+   `default_value`, else the questionnaire's own. A Question with no default
+   and no answer: ask, or say it was left out.
+3. Say in the summary which answers were defaults. A result with
+   `required_missing` is not a finished job: answer those and run it again
+   before reading what it buys.
+
 It reads the whole Enterprise library ranked the way the engine ranks it —
 the same run a Replay case of the job makes — never one branch's shelf or
 stock, so compare it with the prototype on All branches. The result has

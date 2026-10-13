@@ -159,7 +159,9 @@ and show the person any difference they already saw if it changed.
 what the change does to a job, call `ks_resolve` with `layers: drafts` and
 `previewed: {layer_stable_id, context_checksum, diff_checksum}` from that
 preview: the job reads the layer as the patch would leave it, and nothing is
-written. Start from a real job (`ks_replay_results action: case_inputs`). Fix
+written. Start from a real job (`ks_replay_results action: case_inputs`); a
+job you write yourself answers every Question its form asks, defaults
+included (`references/overlay-and-resolve.md`). Fix
 and re-preview as often as needed; apply only what you mean to keep.
 
 ## 5. Check yourself before saving

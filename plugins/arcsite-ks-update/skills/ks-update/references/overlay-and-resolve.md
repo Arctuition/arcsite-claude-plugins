@@ -7,13 +7,15 @@ Section numbers are the skill's (SKILL.md).
 Only when the person asked, or said yes to your offer in section 1.
 
 1. `ks_create_layer` with `kind: organization`, `name`: the company's name,
-   `stable_id`: `org-<organization_id>`, and `parent_layer_stable_id`: the
-   layer the company runs now (its `layer` in `ks_find_target`). It is created
-   with an empty version `0.0.0` already published (`active_version`), so it
-   reads exactly what its parent reads, and it runs for nobody until a company
-   is bound to it. A new Manufacturer or Enterprise Overlay is the same call
-   with that `kind` and a parent of a kind it may stand on. A parent that has
-   never published is refused: its publishing goes to the Console first.
+   `stable_id`: `org-<organization_id>`, and `parent_layer_stable_ids`: the
+   layer the company runs now (its `layer` in `ks_find_target`), plus any other
+   Manufacturer layer the person says the company also buys from. It is
+   created with an empty version `0.0.0` already published (`active_version`),
+   so it reads exactly what its parents read, and it runs for nobody until a
+   company is bound to it. A new Manufacturer or Enterprise Overlay is the same
+   call with that `kind` and parents of a kind it may stand on; a Manufacturer
+   stands on one Trade. A parent that has never published is refused: its
+   publishing goes to the Console first.
 2. `ks_bind_company` with the new layer and the company. It moves the
    company off `previous_layer` at once, and the company quotes on the new
    layer straight away; on an Organization Overlay made on the layer it ran,
@@ -29,6 +31,28 @@ Only when the person asked, or said yes to your offer in section 1.
 
 Say in the summary which layer the company ran before and that it now runs
 the new one.
+
+## What a layer stands on
+
+Only when the person asked: a company that also buys from another
+Manufacturer, or an Enterprise taking on a brand its branches sell.
+`ks_set_layer_parents` with the Enterprise or Organization layer and the
+**whole** set it stands on afterwards (`parent_layer_stable_ids`), the parents
+it keeps included: one left out is removed. Start from `stands_on` in the
+layer's `ks_read_layer` overview, its present parents; the baseline's
+`ancestors` are its whole closure, Cores included, and are not what this
+takes. A Manufacturer layer's parents cannot change.
+
+It is a draft change, like a saved patch: `next` says so, and `companies`
+names who it reaches. Nobody's quotes move until the layer is published in the
+Console, so hand over its release plan (sections 7 and 8). Until then a
+company on it is not offered a Trade the new parent brings, and
+`ks_resolve` with `layers: drafts` still reads the old parents. The authoring
+side moves at once: the next `ks_read_layer` overview lists the new parent's
+vocabulary, and patches can be written against it. Two refusals to report as
+they come: a set the stack cannot hold (wrong kind of parent, no Trade
+reached), and a set the layer's own records would stop compiling on, with the
+records named.
 
 ## What a job comes to
 

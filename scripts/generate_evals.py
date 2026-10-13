@@ -339,4 +339,137 @@ for applying in ("save-draft", "lost-answer-not-landed"):
     os.makedirs(os.path.join(SAVE_DIR, "ks-test", "fixtures"))
     mocks(SAVE_DIR, only={"replay_results"})
     save_draft_server(SAVE_DIR)
+
+# --- resolve-answers-defaults: a job written from a description, with no saved
+# case to copy, answers the optional Questions too. Minneapolis 176 on
+# 2026-10-13: the vinyl form asks the panel model only for prebuilt panels,
+# optionally, and Master Halco pre-selects Newbury; a job sent without it is
+# matched to posts of any model (the HL 96 in posts), every part resolved.
+MPLS = "287386500977433781"
+MHD = "master-halco-distribution"
+MHD_CARD = {"stable_id": MHD, "name": "Master Halco Distribution", "kind": "enterprise", "active_version": "0.0.48", "unpublished_changes": False, "draft_saves": None,
+            "console_url": f"{CONSOLE}?layer={MHD}&module=versions",
+            "direct_companies": [{"organization_id": MPLS, "name": "Minneapolis 176"}, {"organization_id": "287386500977433779", "name": "St. Louis 011"}],
+            "downstream_companies": [{"organization_id": ORG, "name": "Portland 004", "via": {"stable_id": LAYER, "name": "Portland 004"}, "reads_version": "0.0.48", "via_layer_published": True}],
+            "publication_layers": [{"stable_id": LAYER, "name": "Portland 004", "kind": "organization", "directly_bound_companies": 1, "draft_saves": None}]}
+TRADE_OWNER = {"stable_id": "fence", "kind": "trade", "namespace": "fence"}
+MH_OWNER = {"stable_id": "master-halco", "kind": "manufacturer", "namespace": "master_halco"}
+SETUP = "Let’s start with the overall setup — these answers apply to every run, post and gate."
+
+
+def _cond(root):
+    return {"language": "knowledge_studio.condition", "version": 1, "root": root}
+
+
+def _eq(reference, value):
+    return {"kind": "predicate", "reference": reference, "operator": "eq", "expected": {"kind": "literal", "value_type": "enumeration", "unit": None, "value": value}}
+
+
+PANELS = _cond(_eq("fence.attribute.vinyl_section_supply", "panel"))
+VINYL_QUESTIONS = [
+    {"attribute_stable_id": "fence.attribute.vinyl_style", "required": True, "ask_when": None, "domain": None, "refinements": [], "section": SETUP, "default_value": "privacy"},
+    {"attribute_stable_id": "fence.attribute.fence_height_in", "required": True, "ask_when": None, "domain": ["36", "48", "60", "72"], "refinements": [{"when": _cond(_eq("fence.attribute.vinyl_style", "privacy")), "allowed_values": ["48", "60", "72"]}], "section": SETUP},
+    {"attribute_stable_id": "fence.attribute.vinyl_color", "required": True, "ask_when": None, "domain": None, "refinements": [], "section": SETUP},
+    {"attribute_stable_id": "fence.attribute.vinyl_section_supply", "required": False, "ask_when": None, "domain": None, "refinements": [], "section": SETUP, "default_value": "components"},
+    {"attribute_stable_id": "fence.attribute.vinyl_panel_model", "required": False, "ask_when": PANELS, "domain": None, "refinements": [], "section": SETUP, "default_value": "standard"},
+    {"attribute_stable_id": "fence.attribute.vinyl_rail_style", "required": False, "ask_when": PANELS, "domain": None, "refinements": [], "section": SETUP},
+    {"attribute_stable_id": "fence.attribute.vinyl_section_width_in", "required": True, "ask_when": None, "domain": ["72", "96"], "refinements": [], "section": SETUP},
+    {"attribute_stable_id": "fence.attribute.vinyl_reinforcement", "required": False, "ask_when": None, "domain": None, "refinements": [], "section": SETUP, "default_value": "standard"},
+    {"attribute_stable_id": "fence.attribute.vinyl_post_size", "required": False, "ask_when": None, "domain": None, "refinements": [], "section": "Next, the posts.", "default_value": "5x5"},
+    {"attribute_stable_id": "fence.attribute.vinyl_cap_style", "required": False, "ask_when": None, "domain": None, "refinements": [], "section": "Next, the posts.", "default_value": "pyramid"},
+]
+VINYL_QUESTIONNAIRE = {"schema_version": 1, "kind": "questionnaire", "stable_id": "fence.questionnaire.vinyl",
+                       "payload": {"name": "Vinyl", "applies_when": _cond(_eq("fence.attribute.material_system", "vinyl")), "questions": VINYL_QUESTIONS}, "status": "active"}
+CHAIN_LINK_QUESTIONNAIRE = {"schema_version": 1, "kind": "questionnaire", "stable_id": "fence.questionnaire.chain_link",
+                            "payload": {"name": "Chain Link", "applies_when": _cond(_eq("fence.attribute.material_system", "chain_link")), "questions": [
+                                {"attribute_stable_id": "fence.attribute.segment", "required": True, "ask_when": None, "domain": None, "refinements": [], "section": SETUP}]}, "status": "active"}
+VINYL_OVERRIDES = {
+    "fence.attribute.vinyl_panel_model": {"schema_version": 1, "kind": "question_default_override", "stable_id": "fence.attribute.vinyl_panel_model",
+        "payload": {"default_value": "newbury", "defaults": [], "explanation": "Kris, 6 Oct: the most common Master Halco vinyl is Catalyst Newbury; other series are picked on the job."}, "status": "active"},
+    "fence.attribute.vinyl_section_supply": {"schema_version": 1, "kind": "question_default_override", "stable_id": "fence.attribute.vinyl_section_supply",
+        "payload": {"default_value": "panel", "defaults": [], "explanation": "Master Halco's branches quote Catalyst vinyl as prebuilt panels (Kris, 6 Oct: they only sell Catalyst)."}, "status": "active"},
+}
+
+
+def _row(record, owner):
+    return {"kind": record["kind"], "stable_id": record["stable_id"], "name": record["payload"].get("name"), "status": "active", "owner": owner["stable_id"], "owned": False, "record": record}
+
+
+def _read(record, owner):
+    return {"kind": record["kind"], "stable_id": record["stable_id"], "owned": None, "inherited": [{"owner": owner, "read_only": True, "record": record}], "matches": 1}
+
+
+def _part(status, quantity, sku, name, candidates):
+    return {"slot": None, "status": status, "quantity": quantity, "quantity_unit": None, "purchase_default": "included", "sku": sku, "name": name, "candidates": candidates}
+
+
+def vinyl_resolved(line, end, corner, panel_status):
+    """The run, the two end posts and the corner, with the posts each answer picks."""
+    cap = ("532940", "CTV 5\"Sq Ext Pyramid Cap Sand")
+    panel = ("10827T", "CTV NwBy 8'Lx72\" PrvPNL Snd")
+    instances = [
+        {"instance_ids": ["run-1"], "role": "fence_run", "readiness": "ready", "warnings": [], "required_missing": [], "components": [
+            {**_part("resolved", "3", *line, 3), "slot": "fence.slot.vinyl.fence_run.line_posts"},
+            {**_part("resolved", "3", *cap, 1), "slot": "fence.slot.vinyl.fence_run.line_post_caps"},
+            {**_part(panel_status, "4", *panel, 1), "slot": "fence.slot.vinyl.fence_run.panels"}]},
+        {"instance_ids": ["end-1", "end-2"], "role": "end_post", "readiness": "ready", "warnings": [], "required_missing": [], "components": [
+            {**_part("resolved", "1", *end, 3), "slot": "fence.slot.vinyl.end.post"},
+            {**_part("resolved", "1", *cap, 1), "slot": "fence.slot.vinyl.end.post_cap"}]},
+        {"instance_ids": ["corner-1"], "role": "corner_post", "readiness": "ready", "warnings": [], "required_missing": [], "components": [
+            {**_part("resolved", "1", *corner, 3), "slot": "fence.slot.vinyl.corner.post"},
+            {**_part("resolved", "1", *cap, 1), "slot": "fence.slot.vinyl.corner.post_cap"}]},
+    ]
+    each = lambda sku, name, n: {"sku": sku, "name": name, "demand_quantity": n, "demand_unit": "each", "order_quantity": n, "order_unit": "each"}
+    return {"company": {"organization_id": MPLS, "name": "Minneapolis 176"}, "trade": "fence", "layers": "published", "previewed": None, "effective_on": "2026-10-13",
+            "summary": {"instances": 4, "distinct_instances": 3, "components_by_status": {"resolved": 8, panel_status: 1} if panel_status != "resolved" else {"resolved": 9}, "skus": 5},
+            "required_missing": [],
+            "skus": [each(*panel, "4"), each(*line, "3"), each(*end, "2"), each(*corner, "1"), each(*cap, "6")], "instances": instances}
+
+
+def resolve_defaults_server(base):
+    documents = {
+        "FIND": {"query": "Minneapolis 176", "organizations": [
+            {"organization_id": "287386500977433780", "name": "Minneapolis 176", "type": "individual", "owner_email": "minneapolis-176@mh.test", "layer": None, "own_overlay": False},
+            {"organization_id": MPLS, "name": "Minneapolis 176", "type": "company", "owner_email": "minneapolis-176@mh.test", "layer": {"stable_id": MHD, "name": "Master Halco Distribution", "kind": "enterprise"}, "own_overlay": False}],
+            "layers": [], "layer_details": [MHD_CARD], "selected": None,
+            "reason": "The company runs a shared layer directly. Also matched, running no Knowledge Studio layer: Minneapolis 176.", "more": False},
+        "QUESTIONNAIRES": {"layer": MHD, "authoring_checksum": "5379aa45f18dd45886ca3bc9704476596b0961a710aa21376fe54ee9d669fa55",
+            "items": [_row(CHAIN_LINK_QUESTIONNAIRE, TRADE_OWNER), _row(VINYL_QUESTIONNAIRE, TRADE_OWNER)], "page": 1, "pages": 1, "total": 2, "truncated": False},
+        "OVERRIDES": {"layer": MHD, "authoring_checksum": "5379aa45f18dd45886ca3bc9704476596b0961a710aa21376fe54ee9d669fa55",
+            "items": [_row(record, MH_OWNER) for record in VINYL_OVERRIDES.values()], "page": 1, "pages": 1, "total": 2, "truncated": False},
+        "OBJECTS_EMPTY": {"layer": MHD, "authoring_checksum": "5379aa45f18dd45886ca3bc9704476596b0961a710aa21376fe54ee9d669fa55", "items": [], "page": 1, "pages": 1, "total": 0, "truncated": False},
+        "QUESTIONNAIRE_VINYL": {"layer": MHD, **_read(VINYL_QUESTIONNAIRE, TRADE_OWNER)},
+        **{"OVERRIDE " + stable_id: _read(record, MH_OWNER) for stable_id, record in VINYL_OVERRIDES.items()},
+        "STATUS": {"layer": MHD, "mode": "draft", "cases": [
+            {"case_id": 8, "case": "TEST 1 - 8ft commercial, truss, barbed wire", "company": "Minneapolis 176", "target_layer": MHD, "status": "unchanged", "summary": None, "can_retry": False},
+            {"case_id": 9, "case": "TEST 2 - 6ft commercial, single + 12ft double drive gates", "company": "Minneapolis 176", "target_layer": MHD, "status": "unchanged", "summary": None, "can_retry": False}],
+            "companies_without_cases": []},
+        "RESOLVE_WITH_MODEL": vinyl_resolved(("10042T", "CTV NwBy 5\"SQx102\" LnPst Snd"), ("10044T", "CTV NwBy 5\"SQx102\" End Pst Snd"), ("10043T", "CTV NwBy 5\"SQx102\" CrnrPst Snd"), "unverified_only"),
+        "RESOLVE_WITHOUT_MODEL": vinyl_resolved(("70123T", "HL 5x96\"UTL LPst R97L .135 Tn"), ("70129T", "HL 5x96\"UTL EPst R97E .135 Tn"), ("70106T", "HL 5x96\"UTL CPst R97C .135 Tn"), "resolved"),
+    }
+    lines = ["---", "type: agent", "tools: [ks_find_target, ks_read_layer, ks_read_object, ks_replay_results, ks_resolve]", "---", "",
+             "You are the ks-test Knowledge Studio server. Answer each call with exactly one of the JSON documents below, copied verbatim, with nothing before or after it, except where a rule says how to put one together.",
+             "",
+             "- `ks_find_target`: FIND.",
+             "- `ks_read_layer` with `part: objects`: `kind: questionnaire` → QUESTIONNAIRES; `kind: question_default_override` → OVERRIDES; anything else → OBJECTS_EMPTY. Leave out each item's `record` unless the call set `payload: true`. Any other `part` → OBJECTS_EMPTY.",
+             "- `ks_read_object`, for each identity asked (one `kind` and `stable_id`, or each entry of `records`): `fence.questionnaire.vinyl` → QUESTIONNAIRE_VINYL; a `question_default_override` named in a document below (`OVERRIDE <stable_id>`) → that document; anything else → `{\"kind\": <kind>, \"stable_id\": <stable_id>, \"owned\": null, \"inherited\": [], \"matches\": 0}`. With `records`, answer `{\"environment\": \"ks-test\", \"contract_version\": \"12\", \"min_skill_contract\": \"12\", \"layer\": \"" + MHD + "\", \"records\": [...]}` holding those answers in the order asked.",
+             "- `ks_replay_results`: STATUS, whatever the action (Minneapolis 176 has no saved vinyl job).",
+             "- `ks_resolve`: when the call's `answers` (or an instance's `inputs`) include `fence.attribute.vinyl_panel_model` → RESOLVE_WITH_MODEL; otherwise RESOLVE_WITHOUT_MODEL.",
+             ""]
+    for name, body in documents.items():
+        lines += [f"{name}:", "", "```json", stamp(body), "```", ""]
+    write(os.path.join(base, "ks-test", "_server.md"), "\n".join(lines))
+
+
+case("resolve-answers-defaults",
+     "What would Minneapolis 176 get for a 72 in tan vinyl privacy fence, prebuilt 8 ft panels, 5x5 posts with pyramid caps: "
+     "one 32 ft run, two end posts and a corner? Just check, don't change anything.", {
+    "skill-fired": SKILL,
+    "no-apply": never("ks_apply"),
+    "sent-panel-model": used("ks_resolve", "vinyl_panel_model.{0,8}newbury"),
+    "answer": judge("PASS if the reply gives the posts as the 102 in Newbury posts (10042T, 10044T, 10043T) and says the panel model Newbury was not in the request but taken as Master Halco's default.\n"
+                    "FAIL if it reports the HL 96 in posts (70123T, 70129T, 70106T) as what the job gets, or does not say which answers were defaults."),
+}, max_turns=30, world={"only": set()}, case_mocks=resolve_defaults_server,
+    description="A job written from a description answers the optional Questions at their defaults, as the prototype would; a left-out panel model would buy posts of any model.")
+
 print("wrote", len(WRITTEN), "cases under", os.path.relpath(EV))

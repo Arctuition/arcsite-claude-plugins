@@ -218,7 +218,7 @@ request run by a headless Claude Code against recorded ks-test answers (each
 case's `mocks/`; nothing reaches a server), graded on which tools it called and
 what it said. The two cases that apply a change answer the reads an apply
 changes from one agent playing the server, so run with a Sonnet judge, which
-follows it reliably. One run of every case costs about $2.50:
+follows it reliably. One run of every case costs about $3:
 
 ```
 cd plugins/arcsite-ks-update

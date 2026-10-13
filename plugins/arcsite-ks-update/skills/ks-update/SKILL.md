@@ -12,13 +12,13 @@ when asked, run Replay, and report.
 
 ## Rules that always hold
 
-- **Contract: this skill is version 12.** Every tool result carries
+- **Contract: this skill is version 13.** Every tool result carries
   `contract_version` and `min_skill_contract`. If `min_skill_contract` is
-  higher than 12, stop: tell the person to update the plugin (in a terminal,
+  higher than 13, stop: tell the person to update the plugin (in a terminal,
   `claude plugin update arcsite-ks-update@arcsite`, then start a new session).
-  If `contract_version` is lower than 12, or there is no `min_skill_contract`,
+  If `contract_version` is lower than 13, or there is no `min_skill_contract`,
   the server has not been updated yet: stop and say so. Otherwise go on; if
-  `contract_version` is higher than 12, mention once in the summary that a
+  `contract_version` is higher than 13, mention once in the summary that a
   newer plugin exists.
 - **Never publish.** Publishing is the person's click in the Console.
 - **Apply only when asked to save** ("update … and save the draft"). Once
@@ -37,7 +37,7 @@ again after a long session, if you no longer have them):
 `references/release.md` (reading Replay, writing the publish impact),
 `references/catalog.md` (the Product catalog),
 `references/overlay-and-resolve.md` (a company's own Overlay, binding,
-`ks_resolve`), `references/new-manufacturer.md` (a manufacturer from its
+what a layer stands on, `ks_resolve`), `references/new-manufacturer.md` (a manufacturer from its
 sources).
 
 ## Summary (always this shape)

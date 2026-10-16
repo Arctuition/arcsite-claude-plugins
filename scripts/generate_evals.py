@@ -47,7 +47,7 @@ BURIAL_DECLARATION = {"stable_id": "fence.burial_region", "label": "Burial Surve
 CARD = {"stable_id": LAYER, "name": "Portland 004", "kind": "organization", "active_version": "0.0.46", "unpublished_changes": False, "draft_saves": None, "console_url": f"{CONSOLE}?layer={LAYER}&module=versions", "direct_companies": [{"organization_id": ORG, "name": "Portland 004"}], "downstream_companies": [], "publication_layers": []}
 
 
-def stamp(body, contract="12", minimum="12"):
+def stamp(body, contract="15", minimum="12"):
     head = {"environment": "ks-test", "contract_version": contract}
     if minimum is not None:
         head["min_skill_contract"] = minimum
@@ -128,7 +128,7 @@ def write(path, text):
         f.write(text if text.endswith("\n") else text + "\n")
 
 
-def mocks(base, contract="12", minimum="12", only=None, overrides=None, exclude=()):
+def mocks(base, contract="15", minimum="12", only=None, overrides=None, exclude=()):
     """One server's mocks: fixed bodies, and fixtures for the tools keyed by an input."""
     server = os.path.join(base, "ks-test")
     bodies = {**BODIES, **(overrides or {})}
@@ -218,7 +218,7 @@ case("save-draft", SAVE, {
 case("contract-plugin-too-old", SAVE, {
     "no-preview": never("ks_preview"), "no-apply": never("ks_apply"),
     "answer": judge("PASS if the reply stops before changing anything and tells the person to update the plugin (for example `claude plugin update arcsite-ks-update@arcsite`, then start a new session).\nFAIL if it carries on with the change, or says the server is out of date instead."),
-}, world={"contract": "13", "minimum": "13"},
+}, world={"contract": "16", "minimum": "16"},
     description="The server needs a newer skill than this one: stop and ask for a plugin update.")
 
 case("contract-server-behind", SAVE, {
@@ -230,7 +230,7 @@ case("contract-server-behind", SAVE, {
 case("contract-newer-server", ANALYSE, {
     "went-on": used("ks_read_layer"),
     "answer": judge("PASS if the reply answers that Portland 004 uses region_3, set by its own Overlay, and mentions that a newer version of the plugin is available.\nFAIL if it refuses to go on, or does not mention the newer plugin."),
-}, world={"contract": "13", "minimum": "12"},
+}, world={"contract": "16", "minimum": "12"},
     description="A server that only added things since this skill keeps working, with a note about the newer plugin.")
 
 case("catalog-reads-reference", "How many products in Portland 004's catalog have no Role yet, and whose library is that?", {

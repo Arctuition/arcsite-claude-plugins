@@ -62,6 +62,26 @@ section 10, "the sources disagree").
   inspection drafts in the app still hold the old answer and are put right
   when the app next reads the knowledge. Say so in the hand-over.
 
+## Why a recommendation is right
+
+- "Say why this is right, where it came from, who checked it" → a `claim`
+  object, and the Rule names it in `claims` (guide section 10). Any layer may
+  own one; a Rule may only cite a claim its own layer or a layer above owns.
+  One claim may stand behind several Rules.
+- Write only what you were told. A step somebody or a model worked out is
+  `inferred`, never `read`. Leave `confirmed` null and `review.status`
+  `unreviewed` unless the person said who checked it and when.
+  `permitted_uses` is what the person says it may be used for; when nobody
+  said, `internal_review` alone. Past jobs that chose a repair, or a pattern
+  over them, are a `descriptive` or `statistical` claim — never on their own
+  a `prescriptive` one.
+- Review status and permitted uses travel into the inspection's result beside
+  the Rule; nothing is blocked by them yet. Do not tell the person a
+  recommendation is kept from homeowners because its claim does not permit it.
+- A part of a condition somebody will want to point at gets an `id` on that
+  node, unique within the condition. Results also number every part by
+  position, but a position moves when the Rule is rewritten.
+
 ## What Replay and `ks_resolve` cannot see
 
 Replay cases and `ks_resolve` run the trade intake, not an inspection. An

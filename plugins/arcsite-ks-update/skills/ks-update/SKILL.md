@@ -12,13 +12,13 @@ when asked, run Replay, and report.
 
 ## Rules that always hold
 
-- **Contract: this skill is version 15.** Every tool result carries
+- **Contract: this skill is version 16.** Every tool result carries
   `contract_version` and `min_skill_contract`. If `min_skill_contract` is
-  higher than 15, stop: tell the person to update the plugin (in a terminal,
+  higher than 16, stop: tell the person to update the plugin (in a terminal,
   `claude plugin update arcsite-ks-update@arcsite`, then start a new session).
-  If `contract_version` is lower than 15, or there is no `min_skill_contract`,
+  If `contract_version` is lower than 16, or there is no `min_skill_contract`,
   the server has not been updated yet: stop and say so. Otherwise go on; if
-  `contract_version` is higher than 15, mention once in the summary that a
+  `contract_version` is higher than 16, mention once in the summary that a
   newer plugin exists.
 - **Never publish.** Publishing is the person's click in the Console.
 - **Apply only when asked to save** ("update … and save the draft"). Once

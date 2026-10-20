@@ -75,9 +75,17 @@ section 10, "the sources disagree").
   said, `internal_review` alone. Past jobs that chose a repair, or a pattern
   over them, are a `descriptive` or `statistical` claim — never on their own
   a `prescriptive` one.
-- Review status and permitted uses travel into the inspection's result beside
-  the Rule; nothing is blocked by them yet. Do not tell the person a
-  recommendation is kept from homeowners because its claim does not permit it.
+- An `add_fact` counts only when one of the Rule's claims is `prescriptive`
+  and `approved`. Otherwise the Rule still fires and its warnings and Tasks
+  still apply, but the value is a hypothesis: shown in the result
+  (`hypotheses`, `with_hypotheses`) and in the Console's Test panel, never
+  added, and preview warns. So a recommendation resting on an unreviewed claim
+  adds nothing until somebody approves the claim: say so in the summary, and
+  never approve a claim or name a reviewer to make it appear.
+  `exclude_fact_value` needs no claim.
+- Permitted uses travel into the inspection's result beside the Rule; nothing
+  is blocked by them yet. Do not tell the person a recommendation is kept from
+  homeowners because its claim does not permit it.
 - A part of a condition somebody will want to point at gets an `id` on that
   node, unique within the condition. Results also number every part by
   position, but a position moves when the Rule is rewritten.

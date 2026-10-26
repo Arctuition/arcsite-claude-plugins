@@ -12,13 +12,13 @@ when asked, run Replay, and report.
 
 ## Rules that always hold
 
-- **Contract: this skill is version 17.** Every tool result carries
+- **Contract: this skill is version 18.** Every tool result carries
   `contract_version` and `min_skill_contract`. If `min_skill_contract` is
-  higher than 17, stop: tell the person to update the plugin (in a terminal,
+  higher than 18, stop: tell the person to update the plugin (in a terminal,
   `claude plugin update arcsite-ks-update@arcsite`, then start a new session).
-  If `contract_version` is lower than 17, or there is no `min_skill_contract`,
+  If `contract_version` is lower than 18, or there is no `min_skill_contract`,
   the server has not been updated yet: stop and say so. Otherwise go on; if
-  `contract_version` is higher than 17, mention once in the summary that a
+  `contract_version` is higher than 18, mention once in the summary that a
   newer plugin exists.
 - **Never publish.** Publishing is the person's click in the Console.
 - **Apply only when asked to save** ("update … and save the draft"). Once
@@ -37,7 +37,8 @@ again after a long session, if you no longer have them):
 `references/release.md` (reading Replay, writing the publish impact),
 `references/catalog.md` (the Product catalog),
 `references/overlay-and-resolve.md` (a company's own Overlay, binding,
-what a layer stands on, `ks_resolve`), `references/new-manufacturer.md` (a manufacturer from its
+what a layer stands on, `ks_resolve`), `references/replay-cases.md` (saving
+jobs as Replay cases), `references/new-manufacturer.md` (a manufacturer from its
 sources), `references/inspection.md` (an inspection trade: intake, drawings,
 several sources answering one question, what Replay cannot see).
 
@@ -52,6 +53,8 @@ several sources answering one question, what Replay cannot see).
 - **Catalog:** imports (created / updated / unchanged, whose library), tagging
   runs (task id, what it wrote, how to undo), direct edits (rows changed, no
   undo); "none" otherwise
+- **Replay cases saved:** per case its code, case_id, outcome and baseline;
+  "none" otherwise
 - **Other people's drafts:** who saved what on each layer the release
   publishes, from `draft_saves`
 - **Why:** each request line → what changed (or "not done" with the reason)
@@ -80,6 +83,9 @@ several sources answering one question, what Replay cannot see).
   previews, dry runs and reads need no asking.
 - **New Overlay or binding**: `references/overlay-and-resolve.md`, only when
   asked or when the person said yes to your offer.
+- **Save jobs as Replay cases** (a supplier's real orders, or a job built to
+  reach a rule no order reaches): `references/replay-cases.md`. A case is live
+  at once, on every layer the company reads: save only when asked.
 - **A new manufacturer from its sources**: `references/new-manufacturer.md`.
 - **An inspection trade** (a layer standing on Inspection Core — Foundation
   Repair, Pest Control — or a company on one): `references/inspection.md`

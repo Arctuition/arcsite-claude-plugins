@@ -115,6 +115,5 @@ compare: the same job without `previewed` is what the drafts give today.
 means preview again; `candidate_outside_stack` means this company does not
 read that layer.
 
-Saving a job as a Replay case is not yours: a person does it in the prototype
-(Duplicate the job, change it, Save as test case). Say which job is worth
-keeping and why.
+To keep a job as a Replay case, see `references/replay-cases.md`; save it only
+when asked. Otherwise say which job is worth keeping and why.

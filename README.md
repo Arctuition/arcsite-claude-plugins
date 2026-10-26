@@ -126,17 +126,25 @@ published knowledge or the drafts:
 > 2 single swing gates at 48 in. What does it buy?
 
 It reads the whole Enterprise library, as Replay does, so compare it with the
-prototype on All branches. To keep a job as a Replay case, save it in the
-prototype (Duplicate the job, change it, Save as test case).
+prototype on All branches. It can also save jobs as Replay cases, up to 20 at
+a time, from the same input:
+
+> Save these nine Master Halco wood quotes as Replay cases for Minneapolis 176,
+> codes mh-wood-31 to mh-wood-39.
+
+Each case is run once against the published knowledge as its baseline; Replay
+compares later changes with that, not with the supplier's quote. Sending the
+same batch again changes nothing, so a wrong case is fixed and sent again.
+Removing a case is done in the Console.
 
 ## Fewer approval prompts (optional)
 
 Claude Code asks before each tool call unless you allow it. To allow the
 read-only tools, add this to your `~/.claude/settings.json` (a plugin cannot
 ship permissions itself). The tools that write — `ks_apply`, `ks_replay`,
-`ks_catalog_import_apply`, `ks_catalog_tag`, `ks_catalog_edit`,
-`ks_create_layer` and `ks_bind_company` — are deliberately left out so each
-still asks.
+`ks_save_cases`, `ks_catalog_import_apply`, `ks_catalog_tag`,
+`ks_catalog_edit`, `ks_create_layer` and `ks_bind_company` — are deliberately
+left out so each still asks.
 
 ```json
 {

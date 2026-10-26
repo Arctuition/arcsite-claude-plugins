@@ -53,6 +53,6 @@ When the person brings a manufacturer's material and wants it set up.
    not say how much it holds goes on the manufacturer's list.
 9. Then the usual steps: the layer's patch (sections 2–6), the catalog import,
    its selling terms and a first AI-tagging run of 20 (`references/catalog.md`), one real job
-   through `ks_resolve` with `layers: drafts` (`references/overlay-and-resolve.md`), test cases saved by
-   a person in the prototype, and Replay (section 7). Publishing stays the
+   through `ks_resolve` with `layers: drafts` (`references/overlay-and-resolve.md`), real orders
+   saved as Replay cases when asked (`references/replay-cases.md`), and Replay (section 7). Publishing stays the
    person's, in the Console (section 8).

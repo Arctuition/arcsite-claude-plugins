@@ -5,14 +5,18 @@ marketplace: installing needs no GitHub account.
 
 | Plugin | What it does |
 | --- | --- |
-| [`arcsite-ks-update`](plugins/arcsite-ks-update) | Update Knowledge Studio knowledge from Claude Code: find the layer, preview and save a draft, run Replay, and hand publishing back to the Console. Connects to the **test** environment only. |
+| [`arcsite-ks-update`](plugins/arcsite-ks-update) | Update Knowledge Studio knowledge from Claude Code: find the layer, preview and save a draft, run Replay, and hand publishing back to the Console. Works on the **test** or the **production** environment, one per task. |
 
 ## Install (once)
 
 You need Claude Code: the Claude desktop app's **Code** tab, a terminal
 (`claude`), or VS Code. Your ArcSite Google Workspace account needs the Admin
-Console's Knowledge Studio authoring role (`SYSTEM_CONTENT`) on admin-test;
-without it the sign-in page tells you so.
+Console's **Knowledge Studio** role (`KNOWLEDGE_STUDIO`) in each environment you
+connect: admin-test.arcsite.com for test, admin.arcsite.com for production.
+Without it the sign-in page tells you so.
+
+The plugin adds two connectors: **ks-test** and **ks-production**. Connect the
+ones you work on; a connector you never sign in to stays unused.
 
 ### In the Claude desktop app
 
@@ -20,9 +24,9 @@ without it the sign-in page tells you so.
    box, then **Plugins** → **Add plugin**.
 2. Add the marketplace `https://github.com/Arctuition/arcsite-claude-plugins`,
    then install **arcsite-ks-update** for your user account.
-3. Connect the **ks-test** connector the plugin adds: start its sign-in, sign
-   in with your ArcSite Google account in the browser that opens, and click
-   **Allow**.
+3. Connect the **ks-test** and/or **ks-production** connector the plugin adds:
+   start its sign-in, sign in with your ArcSite Google account in the browser
+   that opens, and click **Allow**.
 
 ### In a terminal
 
@@ -33,16 +37,17 @@ without it the sign-in page tells you so.
    /plugin install arcsite-ks-update@arcsite
    ```
 
-2. Connect: run `/mcp`, pick `plugin:arcsite-ks-update:ks-test`, choose
-   **Authenticate**, then sign in and click **Allow** as above.
+2. Connect: run `/mcp`, pick `plugin:arcsite-ks-update:ks-test` (or
+   `plugin:arcsite-ks-update:ks-production`), choose **Authenticate**, then
+   sign in and click **Allow** as above.
 
 The desktop app, a terminal and VS Code on one computer share plugin
 settings, so the plugin installed in one is there in the others. Signing in
 is not shared: if you use both the desktop app and a terminal, connect
-ks-test from each.
+from each.
 
 There is no token to copy or renew. Claude Code keeps the credential and
-refreshes it; if it ever lapses, connect ks-test again.
+refreshes it; if it ever lapses, connect that environment again.
 
 ### Updates
 
@@ -70,11 +75,18 @@ Admins can pre-install the plugin for everyone with managed settings:
 
 ## Use
 
-Ask in plain words, naming the company or layer and what to change:
+Ask in plain words, naming the environment, the company or layer and what to
+change:
 
-> Update the Springfield branch configuration to prefer the tightener the
-> customer just confirmed. Only this branch. Save the draft and check it
-> against the earlier orders.
+> In production, update the Springfield branch configuration to prefer the
+> tightener the customer just confirmed. Only this branch. Save the draft and
+> check it against the earlier orders.
+
+The agent works on one environment per task. If you do not say test or
+production, it asks before it reads anything, and it never carries a change
+from one to the other unless you ask. Production is what customers' jobs read:
+a draft reaches them when you publish it, a catalog edit or moving a company
+onto another layer at once.
 
 Say "save the draft" when you want the change written; otherwise the agent
 only analyses and previews. Before saving, it can try the previewed change on
@@ -140,8 +152,10 @@ Removing a case is done in the Console.
 ## Fewer approval prompts (optional)
 
 Claude Code asks before each tool call unless you allow it. To allow the
-read-only tools, add this to your `~/.claude/settings.json` (a plugin cannot
-ship permissions itself). The tools that write — `ks_apply`, `ks_replay`,
+read-only tools on test, add this to your `~/.claude/settings.json` (a plugin
+cannot ship permissions itself). The list leaves production out on purpose, so
+every production call still asks; to allow its reads too, add the same lines
+with `ks-production` in place of `ks-test`. The tools that write — `ks_apply`, `ks_replay`,
 `ks_save_cases`, `ks_catalog_import_apply`, `ks_catalog_tag`,
 `ks_catalog_edit`, `ks_create_layer` and `ks_bind_company` — are deliberately
 left out so each still asks.
@@ -169,9 +183,9 @@ left out so each still asks.
 | You see | Do |
 | --- | --- |
 | The agent says the plugin is too old | Update the plugin: `/plugin` → **Installed** → `arcsite-ks-update` → **Update now**, or `claude plugin update arcsite-ks-update@arcsite` in a shell. Then restart Claude Code |
-| The agent says the server has not been updated yet | The plugin is newer than ks-test. Wait for the deploy, or ask whoever released it |
-| Tools fail with 401 / "not authenticated", or ks-test shows as needing sign-in | Connect ks-test again: the ks-test connector in the desktop app, or `/mcp` → `plugin:arcsite-ks-update:ks-test` → **Authenticate** in a terminal |
-| "This account cannot connect" on the sign-in page | Ask an Admin Console administrator for the Knowledge Studio authoring role |
+| The agent says the server has not been updated yet | The plugin is newer than that environment's server. Wait for the deploy, or ask whoever released it |
+| Tools fail with 401 / "not authenticated", or ks-test / ks-production shows as needing sign-in | Connect that environment again: its connector in the desktop app, or `/mcp` → `plugin:arcsite-ks-update:ks-test` (or `:ks-production`) → **Authenticate** in a terminal |
+| "This account cannot connect" on the sign-in page | Ask an Admin Console administrator for the Knowledge Studio role in that environment |
 
 ## Pilot log
 
@@ -212,14 +226,16 @@ relies on changed meaning or went away, a refusal it does not expect -- raises
 `min_skill_contract`; an addition leaves it alone, so nobody on the older
 plugin is stopped.
 
-Both numbers are readable without signing in:
+Both numbers are readable without signing in, per environment:
 
 ```
 curl -s https://admin-test.arcsite.com/manage/ks-mcp/contract
+curl -s https://admin.arcsite.com/manage/ks-mcp/contract
 ```
 
-A pull request that sets the skill's contract higher than ks-test's fails the
-`contract` check, so a plugin cannot be merged ahead of the server it needs.
+A pull request that sets the skill's contract higher than either
+environment's fails the `contract` check, so a plugin cannot be merged ahead of
+the server it needs on test or on production.
 
 Before merging a change to the skill, run its eval suite. Each case is a real
 request run by a headless Claude Code against recorded ks-test answers (each
@@ -241,8 +257,9 @@ docstring says how to refresh the recorded answers and
 
 In this order:
 
-1. Merge the cloudservice change and deploy it to test, migrations included.
-2. Confirm the numbers at the address above.
+1. Merge the cloudservice change and deploy it to test and production,
+   migrations included.
+2. Confirm the numbers at both addresses above.
 3. Re-run the pull request's `contract` check, merge it, and tell the people
    using the plugin to update.
 4. In a new session, check that the skill and the server agree.

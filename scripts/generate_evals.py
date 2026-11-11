@@ -8,6 +8,11 @@ Each case carries its own mocks (a suite-level <tool>.md would take precedence
 over a case's _server.md), so the files are many and alike; edit them here,
 never by hand. Each case directory is written over whole; it leaves alone: evals/mocks/ks-test/_tools.json and evals/results/.
 
+Every case mocks both servers, ks-test and ks-production, with the same answers
+stamped with each one's environment, so the agent sees both sets of tools as a
+person does; a case whose request names an environment also checks the agent
+never called the other one.
+
 The answers are ks-test's own, read with read-only tools for Portland 004 on
 2026-10-09 and stamped with the contract the skill is written for. When the
 tools change shape, refresh both:
@@ -47,8 +52,11 @@ BURIAL_DECLARATION = {"stable_id": "fence.burial_region", "label": "Burial Surve
 CARD = {"stable_id": LAYER, "name": "Portland 004", "kind": "organization", "active_version": "0.0.46", "unpublished_changes": False, "draft_saves": None, "console_url": f"{CONSOLE}?layer={LAYER}&module=versions", "direct_companies": [{"organization_id": ORG, "name": "Portland 004"}], "downstream_companies": [], "publication_layers": []}
 
 
-def stamp(body, contract="18", minimum="12"):
-    head = {"environment": "ks-test", "contract_version": contract}
+SERVERS = ("ks-test", "ks-production")
+
+
+def stamp(body, contract="18", minimum="12", environment="ks-test"):
+    head = {"environment": environment, "contract_version": contract}
     if minimum is not None:
         head["min_skill_contract"] = minimum
     return json.dumps({**head, **body}, separators=(",", ":"))
@@ -129,13 +137,17 @@ def write(path, text):
 
 
 def mocks(base, contract="18", minimum="12", only=None, overrides=None, exclude=()):
-    """One server's mocks: fixed bodies, and fixtures for the tools keyed by an input."""
-    server = os.path.join(base, "ks-test")
+    """Both servers' mocks: fixed bodies, and fixtures for the tools keyed by an input."""
+    for environment in SERVERS:
+        server_mocks(os.path.join(base, environment), environment, contract, minimum, only, overrides, exclude)
+
+
+def server_mocks(server, environment, contract, minimum, only, overrides, exclude):
     bodies = {**BODIES, **(overrides or {})}
     for name, body in bodies.items():
         if "-" in name:
             if (only is None or name.split("-")[0] in only) and name.split("-")[0] not in exclude:
-                write(os.path.join(server, "fixtures", name + ".json"), stamp(body, contract, minimum))
+                write(os.path.join(server, "fixtures", name + ".json"), stamp(body, contract, minimum, environment))
     fixed = {
         "find_target": "", "read_object": "", "preview": "---\nexpect:\n  layer_stable_id: " + LAYER + "\n---\n\n",
         "apply": "---\nexpect:\n  layer_stable_id: " + LAYER + "\n  context_checksum: \"" + CTX + "\"\n  diff_checksum: \"" + DIFF + "\"\n---\n\n",
@@ -143,19 +155,25 @@ def mocks(base, contract="18", minimum="12", only=None, overrides=None, exclude=
     }
     for tool, head in fixed.items():
         if (only is None or tool in only) and tool not in exclude:
-            write(os.path.join(server, f"ks_{tool}.md"), head + stamp(bodies[tool], contract, minimum))
+            write(os.path.join(server, f"ks_{tool}.md"), head + stamp(bodies[tool], contract, minimum, environment))
     if (only is None or "read_layer" in only) and "read_layer" not in exclude:
         write(os.path.join(server, "ks_read_layer.md"), "{{file:fixtures/read_layer-{input.part}.json}}")
     if (only is None or "replay_results" in only) and "replay_results" not in exclude:
         write(os.path.join(server, "ks_replay_results.md"), "{{file:fixtures/replay_results-{input.action}.json}}")
 
 
-def case(name, prompt, graders, *, max_turns=20, tools=("Read", "Skill"), runs=1, case_mocks=None, description="", world=None):
+def case(name, prompt, graders, *, max_turns=20, tools=("Read", "Skill"), runs=1, case_mocks=None, description="", world=None, environment="test"):
+    """A case whose request names `environment`; None leaves the choice to the agent."""
+    if environment:
+        prompt = f"On {environment}: {prompt}"
     base = os.path.join(EV, name)
     shutil.rmtree(base, ignore_errors=True)
     WRITTEN.append(name)
     head = ["---", f"description: {json.dumps(description)}", f"runs: {runs}", f"max_turns: {max_turns}", "timeout_seconds: 900", f"allowed_tools: [{', '.join(tools)}]", "---", ""]
     write(os.path.join(base, "prompt.md"), "\n".join(head) + prompt.strip())
+    if environment:
+        other = next(server for server in SERVERS if server != f"ks-{environment}")
+        graders = {**graders, f"stays-on-{environment}": ({"type": "regex", "target": "mock_calls", "pattern": other + "__", "match": "not_contains", "arm": "both"}, None)}
     for grader, (front, body) in graders.items():
         lines = ["---"] + [f"{k}: {v}" for k, v in front.items()] + ["---", ""]
         write(os.path.join(base, "graders", grader + ".md"), "\n".join(lines) + (body.strip() if body else ""))
@@ -194,6 +212,8 @@ def judge(text):
 # Suite-wide mocks and the saved tools/list.
 WRITTEN = []
 assert os.path.exists(os.path.join(EV, "mocks", "ks-test", "_tools.json")), "evals/mocks/ks-test/_tools.json is refreshed separately"
+# Both servers offer the same tools.
+write(os.path.join(EV, "mocks", "ks-production", "_tools.json"), open(os.path.join(EV, "mocks", "ks-test", "_tools.json")).read())
 write(os.path.join(EV, ".gitignore"), "results/")
 
 ANALYSE = "What burial survey region does Portland 004 use for its fence jobs right now, and where does that value come from? Don't change anything."
@@ -244,6 +264,13 @@ case("new-manufacturer-asks-first", "I've got price lists and spec sheets from a
     "no-ks-calls": ({"type": "regex", "target": "mock_calls", "pattern": "ks_", "match": "not_contains", "arm": "both"}, None),
     "asks": judge("PASS if the reply, before doing anything, asks which manufacturer, which Trade, whether its layer is new or already exists, and which company will quote on it.\nFAIL if it starts reading, creating or importing anything, or asks none of these."),
 }, description="A new manufacturer starts with questions, not tool calls.")
+
+case("environment-asks-first", SAVE, {
+    "skill-fired": SKILL,
+    "no-ks-calls": ({"type": "regex", "target": "mock_calls", "pattern": "ks_", "match": "not_contains", "arm": "both"}, None),
+    "asks": judge("PASS if the reply, before reading or changing anything, asks whether to work on test or on production.\nFAIL if it starts reading or changing anything, or picks an environment itself."),
+}, environment=None,
+    description="A request that names no environment is asked about it before any Knowledge Studio call.")
 
 LOST = ("Earlier today you saved a draft on Portland 004's overlay: the burial survey region back to unassigned "
         f"(preview context_checksum {CTX}, diff_checksum {DIFF}). The connection dropped before the apply answered. "

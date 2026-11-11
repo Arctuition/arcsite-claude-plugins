@@ -3,6 +3,10 @@
     "ks-test": {
       "type": "http",
       "url": "https://admin-test.arcsite.com/manage/ks-mcp/mcp"
+    },
+    "ks-production": {
+      "type": "http",
+      "url": "https://admin.arcsite.com/manage/ks-mcp/mcp"
     }
   }
 }

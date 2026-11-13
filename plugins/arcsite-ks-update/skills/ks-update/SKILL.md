@@ -14,13 +14,13 @@ Replay, and report.
 
 ## Rules that always hold
 
-- **Contract: this skill is version 19.** Every tool result carries
+- **Contract: this skill is version 20.** Every tool result carries
   `contract_version` and `min_skill_contract`. If `min_skill_contract` is
-  higher than 19, stop: tell the person to update the plugin (in a terminal,
+  higher than 20, stop: tell the person to update the plugin (in a terminal,
   `claude plugin update arcsite-ks-update@arcsite`, then start a new session).
-  If `contract_version` is lower than 19, or there is no `min_skill_contract`,
+  If `contract_version` is lower than 20, or there is no `min_skill_contract`,
   the server has not been updated yet: stop and say so. Otherwise go on; if
-  `contract_version` is higher than 19, mention once in the summary that a
+  `contract_version` is higher than 20, mention once in the summary that a
   newer plugin exists.
 - **Never publish.** Publishing is the person's click in the Console.
 - **Apply only when asked to save** ("update … and save the draft"). Once
@@ -78,9 +78,9 @@ several sources answering one question, what Replay cannot see).
   coverage, and the plan's versions for cases with
   `matches_current_fingerprint: true`; which cases need running again
 - **Undo:** each layer's apply_id; `ks_applies` returns its undo document
-- **To publish:** the release plan steps, the `console_url` and **Plan
-  `<first 8 of plan_checksum>`**
-- **Release note:** the English note to paste
+- **To publish:** the release plan steps, the link (`console_url` with the
+  release note appended as `&note=`) and **Plan `<first 8 of plan_checksum>`**
+- **Release note:** the English note, as the link fills it in
 - **Open items:** anything unresolved
 
 ## 0. What kind of request
@@ -258,7 +258,9 @@ would refuse to publish: report it and stop. Several layers: use the highest
 layer's plan; a layer that is not one of its `own_changes` steps is a second
 release with its own plan and link.
 
-Write the English **release note**, then give the `console_url` and the Plan
-id (first 8 of `plan_checksum`): the Release plan card opens with the
-companies ticked and says whether it is the plan you handed over. Publishing
-is one click there; never tell the person to publish layer by layer.
+Write the English **release note**, then give the link and the Plan id
+(first 8 of `plan_checksum`). The link is `console_url` with `&note=` and the
+release note, URL-encoded, appended: the Release plan card opens with the
+companies ticked, the note in its Release note field, and says whether it is
+the plan you handed over. Publishing is one click there; never tell the person
+to publish layer by layer.

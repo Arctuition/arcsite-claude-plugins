@@ -129,10 +129,13 @@ reads it), get that layer's release plan too, give its impact as well, and give
 both links: each publishes in one go, but they are two releases.
 
 **Release note.** Write one in English for the Release plan card's Release
-note field, ready to paste: a line per layer that changes, saying what changed
+note field: a line per layer that changes, saying what changed
 and for whom (for example "Master Halco: residential top rail defaults to
 1-5/8 in, as Master Halco confirmed"), then "Also ships: …" for records that
-ship but were not this task's. Say the person can edit it.
+ship but were not this task's. Append it to `console_url` as `&note=` with the
+note URL-encoded (newlines as `%0A`), so the card opens with it filled in.
+Keep it under 2,000 characters, the most a publish takes. Say the person can
+edit it there.
 
 Publishing is done in the Console, in one go. The release plan's
 `console_url` opens the changed layer's Release plan card with these companies
@@ -140,7 +143,8 @@ already ticked and the plan computed, and it carries `plan_checksum`: the card
 compares its own plan with yours and says whether it is the plan you handed
 over. Its **Plan id** is the first 8 characters of `plan_checksum`. The person
 checks the steps match your summary, reads What ships and the Release Replay
-there, pastes the release note, and publishes every step at once. If the card
+there, reads the release note the link filled in, and publishes every step at
+once. If the card
 says it is not the plan you handed over, someone changed something after you
 read it: ask them to come back so you read the release plan again and
 summarise it anew; publishing stays held until they confirm they reviewed the

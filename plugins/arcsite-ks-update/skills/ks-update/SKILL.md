@@ -14,13 +14,13 @@ Replay, and report.
 
 ## Rules that always hold
 
-- **Contract: this skill is version 18.** Every tool result carries
+- **Contract: this skill is version 20.** Every tool result carries
   `contract_version` and `min_skill_contract`. If `min_skill_contract` is
-  higher than 18, stop: tell the person to update the plugin (in a terminal,
+  higher than 20, stop: tell the person to update the plugin (in a terminal,
   `claude plugin update arcsite-ks-update@arcsite`, then start a new session).
-  If `contract_version` is lower than 18, or there is no `min_skill_contract`,
+  If `contract_version` is lower than 20, or there is no `min_skill_contract`,
   the server has not been updated yet: stop and say so. Otherwise go on; if
-  `contract_version` is higher than 18, mention once in the summary that a
+  `contract_version` is higher than 20, mention once in the summary that a
   newer plugin exists.
 - **Never publish.** Publishing is the person's click in the Console.
 - **Apply only when asked to save** ("update … and save the draft"). Once
@@ -78,9 +78,9 @@ several sources answering one question, what Replay cannot see).
   coverage, and the plan's versions for cases with
   `matches_current_fingerprint: true`; which cases need running again
 - **Undo:** each layer's apply_id; `ks_applies` returns its undo document
-- **To publish:** the release plan steps, the `console_url` and **Plan
-  `<first 8 of plan_checksum>`**
-- **Release note:** the English note to paste
+- **To publish:** the release plan steps, the link (`console_url` with the
+  release note appended as `&note=`) and **Plan `<first 8 of plan_checksum>`**
+- **Release note:** the English note, as the link fills it in
 - **Open items:** anything unresolved
 
 ## 0. What kind of request
@@ -224,13 +224,19 @@ Once every draft of the task is saved:
    `release_organization_ids`. A company in `unreachable_organization_ids`
    means the company or the layer is wrong: stop and ask.
 2. `ks_replay` on that layer with `release_organization_ids` copied exactly,
-   and `wait_seconds: 15`: it answers with the runs' `status`.
+   `wait_seconds: 15` and `summary: true`: it answers with the runs'
+   `status`.
 3. Until no case is `queued`, `running` or `baseline_pending`:
-   `ks_replay_results action: status`, same ids, `wait_seconds: 15`. `not_run`:
-   call `ks_replay` again. Do not end your turn to wait; stop only if nothing
-   moved for ten minutes, and say so.
+   `ks_replay_results action: status`, same ids, `wait_seconds: 15`,
+   `summary: true`. With `summary`, `status.summary` counts the cases by
+   status, overall and per company, and `cases_not_unchanged` names every case
+   that is not `unchanged`; take the totals from there, never by counting a
+   list. `not_run`: call `ks_replay` again. Do not end your turn to wait; stop
+   only if nothing moved for ten minutes, and say so.
 4. `action: case_diff` (same ids, the case's `case_id`) for one changed case
-   per company; more only if the first does not explain it.
+   per company; more only if the first does not explain it. Leave `summary`
+   out only when you need a field of every case (`release_run.error`,
+   `read_as_drafts`).
 
 Before reporting, read `references/release.md`: what `outdated`,
 `matches_current_fingerprint`, `catalog_changed`, `missing_facts` and
@@ -252,7 +258,9 @@ would refuse to publish: report it and stop. Several layers: use the highest
 layer's plan; a layer that is not one of its `own_changes` steps is a second
 release with its own plan and link.
 
-Write the English **release note**, then give the `console_url` and the Plan
-id (first 8 of `plan_checksum`): the Release plan card opens with the
-companies ticked and says whether it is the plan you handed over. Publishing
-is one click there; never tell the person to publish layer by layer.
+Write the English **release note**, then give the link and the Plan id
+(first 8 of `plan_checksum`). The link is `console_url` with `&note=` and the
+release note, URL-encoded, appended: the Release plan card opens with the
+companies ticked, the note in its Release note field, and says whether it is
+the plan you handed over. Publishing is one click there; never tell the person
+to publish layer by layer.

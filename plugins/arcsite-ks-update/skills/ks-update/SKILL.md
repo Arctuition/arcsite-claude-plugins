@@ -14,13 +14,13 @@ Replay, and report.
 
 ## Rules that always hold
 
-- **Contract: this skill is version 20.** Every tool result carries
+- **Contract: this skill is version 21.** Every tool result carries
   `contract_version` and `min_skill_contract`. If `min_skill_contract` is
-  higher than 20, stop: tell the person to update the plugin (in a terminal,
+  higher than 21, stop: tell the person to update the plugin (in a terminal,
   `claude plugin update arcsite-ks-update@arcsite`, then start a new session).
-  If `contract_version` is lower than 20, or there is no `min_skill_contract`,
+  If `contract_version` is lower than 21, or there is no `min_skill_contract`,
   the server has not been updated yet: stop and say so. Otherwise go on; if
-  `contract_version` is higher than 20, mention once in the summary that a
+  `contract_version` is higher than 21, mention once in the summary that a
   newer plugin exists.
 - **Never publish.** Publishing is the person's click in the Console.
 - **Apply only when asked to save** ("update … and save the draft"). Once
@@ -174,6 +174,18 @@ variants) → preview again. Two rounds failing the same way with nothing
 learned: stop and show the issues verbatim. `baseline_drift` means the layer or
 the packages it reads moved: re-read and redo the patch on the new baseline,
 and show the person any difference they already saw if it changed.
+
+**A document too big to write as an argument** (a Manufacturer's maker table:
+a `dataset_rows_replacement` always carries the whole grid, often megabytes)
+goes as a file. Build it with a script into a file, never by hand, then
+`ks_upload_start` → run its `command` in your shell with `<file>` replaced by
+the path → `ks_preview` with `upload_id` instead of `document`; from there it
+is the same preview, try and apply. The address works once and for 15 minutes:
+a file the server refused (not JSON) can be fixed and sent to the same
+address; anything else, start a new upload. If the command cannot reach the
+server at all (connection refused, host blocked), your shell has no network to
+it: give the person the file and say it can be loaded in the Console's
+Interchange module instead.
 
 **Try it before saving.** An applicable preview is kept for 24 hours. To see
 what the change does to a job, call `ks_resolve` with `layers: drafts` and

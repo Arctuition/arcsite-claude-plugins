@@ -184,8 +184,9 @@ is the same preview, try and apply. The address works once and for 15 minutes:
 a file the server refused (not JSON) can be fixed and sent to the same
 address; anything else, start a new upload. If the command cannot reach the
 server at all (connection refused, host blocked), your shell has no network to
-it: give the person the file and say it can be loaded in the Console's
-Interchange module instead.
+it, and there is no other way in: stop and ask the person to allow the upload
+address's host in Claude's network settings (or ask their admin to), then
+start a new upload.
 
 **Try it before saving.** An applicable preview is kept for 24 hours. To see
 what the change does to a job, call `ks_resolve` with `layers: drafts` and
